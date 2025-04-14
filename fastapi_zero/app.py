@@ -18,11 +18,6 @@ from fastapi_zero.schemas import (
 app = FastAPI()
 
 
-@app.get('/', status_code=HTTPStatus.OK, response_model=Message)
-def read_root():
-    return {'message': 'Olá mundo'}
-
-
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
 def create_users(user: UserSchema):
     user_with_id = UserDB(id=get_user_count() + 1, **user.model_dump())
@@ -35,6 +30,17 @@ def create_users(user: UserSchema):
 @app.get('/users/', response_model=UserList)
 def read_users():
     return {'users': get_all_users()}
+
+
+@app.get('/users/{user_id}', response_model=UserPublic)
+def read_user(user_id: int):
+    if user_id < 1 or user_id > get_user_count():
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+        )
+    user_with_id = get_all_users()[user_id - 1]
+
+    return user_with_id
 
 
 @app.put('/users/{user_id}', response_model=UserPublic)
