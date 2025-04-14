@@ -5,13 +5,6 @@ from http import HTTPStatus
 from fastapi_zero.database import get_user_count
 
 
-def test_read_root_deve_retornar_ok_e_ola_mundo(client):
-    response = client.get('/')  # Act (ação)
-
-    assert response.status_code == HTTPStatus.OK  # Assert
-    assert response.json() == {'message': 'Olá mundo'}  # Assert
-
-
 def test_create_user(client):
     response = client.post(  # UserSchema
         '/users/',
@@ -46,6 +39,22 @@ def test_read_users(client):
         ]
     }
 
+
+def test_read_valid_user(client):
+    response = client.get(
+        '/users/1',
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'username': 'testusername',
+        'email': 'teste@teste.com',
+        'id': 1,
+    }
+
+
+# def test_read_invalid_user_id_less_than_1():
+#
+# def test_read_invalid_user_id_grater_than_length():
 
 def test_update_user(client):
     response = client.put(
