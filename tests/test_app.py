@@ -52,8 +52,14 @@ def test_read_valid_user(client):
     }
 
 
-# def test_read_invalid_user_id_less_than_1():
-#
+def test_read_invalid_user_id_less_than_1(client):
+    response = client.get(
+        '/users/1',
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
 # def test_read_invalid_user_id_grater_than_length():
 
 def test_update_user(client):
