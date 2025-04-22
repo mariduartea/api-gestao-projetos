@@ -1,13 +1,16 @@
 from contextlib import contextmanager
 from datetime import datetime
+from http import HTTPStatus
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 
 from fastapi_zero.app import app
 from fastapi_zero.models import table_registry
+from fastapi_zero.database import get_user_by_email
 
 
 @pytest.fixture

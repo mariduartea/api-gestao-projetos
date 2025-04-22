@@ -9,7 +9,6 @@ from fastapi import FastAPI, HTTPException
 # import do projeto
 from fastapi_zero.database import (
     get_all_users,
-    get_user_by_email,
     get_user_count,
 )
 from fastapi_zero.schemas import (
@@ -19,17 +18,14 @@ from fastapi_zero.schemas import (
     UserPublic,
     UserSchema,
 )
+from fastapi_zero.utils.validators import check_already_registered_email
 
 app = FastAPI()
 
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
 def create_users(user: UserSchema):
-    result = get_user_by_email(user.email)
-    if result:
-        raise HTTPException(
-            status_code=HTTPStatus.CONFLICT, detail='Email already registered'
-        )
+    check_already_registered_email(user.email)
 
     user_with_id = UserDB(id=get_user_count() + 1, **user.model_dump())
 
@@ -60,6 +56,7 @@ def update_user(user_id: int, user: UserSchema):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found'
         )
+    check_already_registered_email(user.email)
 
     user_with_id = UserDB(**user.model_dump(), id=user_id)
 
