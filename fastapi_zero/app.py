@@ -4,9 +4,10 @@ from http import HTTPStatus
 
 # blbliotecas terceiras
 from fastapi import FastAPI, HTTPException
+import uvicorn
 
 # import do projeto
-from fastapi_zero.database import get_all_users, get_user_count
+from fastapi_zero.database import get_all_users, get_user_count, get_user_by_email
 from fastapi_zero.schemas import (
     Message,
     UserDB,
@@ -20,6 +21,11 @@ app = FastAPI()
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
 def create_users(user: UserSchema):
+    result = get_user_by_email(user.email)
+    if result:
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT, detail="Email already registered"
+        )
     user_with_id = UserDB(id=get_user_count() + 1, **user.model_dump())
 
     get_all_users().append(user_with_id)
@@ -67,3 +73,7 @@ def delete_user(user_id: int):
     del get_all_users()[user_id - 1]
 
     return {'message': 'User deleted'}
+
+
+if __name__ == '__main__':
+    uvicorn.run('app:app', host='0.0.0.0', port=8000)
