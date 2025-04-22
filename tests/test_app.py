@@ -6,16 +6,8 @@ from fastapi_zero.database import get_user_count
 
 
 # teste para criar um usuário com sucesso
-def test_create_user(client):
-    response = client.post(  # UserSchema
-        '/users/',
-        json={
-            'username': 'testusername',
-            'email': 'teste@teste.com',
-            'password': 'password',
-        },
-    )
-
+def test_create_user(client, create_user):
+    response = create_user
     # Voltou o status code correto?
     assert response.status_code == HTTPStatus.CREATED
     # Validar o UserPublic
@@ -48,6 +40,21 @@ def test_not_create_user_password_less_than_6(client):
 
 
 # teste para validar que não é possível cadastrar 2 usuários com o mesmo email
+def test_not_create_with_same_email(client, create_user):
+    if get_user_count() == 0:
+        create_user(client)
+    response = client.post(
+        'users',
+        json={
+            "username": "testusername",
+            "email": "teste@teste.com",
+            "password": "password"
+        }
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json()["detail"] == "Email already registered"
+
+
 # teste para ler usuários com sucesso
 def test_read_users(client):
     response = client.get('/users/')
