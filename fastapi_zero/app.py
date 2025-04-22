@@ -1,13 +1,17 @@
 # biblioteca padrão
-
 from http import HTTPStatus
 
-# blbliotecas terceiras
-from fastapi import FastAPI, HTTPException
 import uvicorn
 
+# bibliotecas de terceiros
+from fastapi import FastAPI, HTTPException
+
 # import do projeto
-from fastapi_zero.database import get_all_users, get_user_count, get_user_by_email
+from fastapi_zero.database import (
+    get_all_users,
+    get_user_by_email,
+    get_user_count,
+)
 from fastapi_zero.schemas import (
     Message,
     UserDB,
@@ -24,8 +28,9 @@ def create_users(user: UserSchema):
     result = get_user_by_email(user.email)
     if result:
         raise HTTPException(
-            status_code=HTTPStatus.CONFLICT, detail="Email already registered"
+            status_code=HTTPStatus.CONFLICT, detail='Email already registered'
         )
+
     user_with_id = UserDB(id=get_user_count() + 1, **user.model_dump())
 
     get_all_users().append(user_with_id)

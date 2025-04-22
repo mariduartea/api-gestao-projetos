@@ -25,9 +25,29 @@ def test_create_user(client):
         'id': 1,
     }
 
-# teste para validar que não é possível inserir uma senha menor que 6 caracteres
 
-# teste para validar que não é possível cadastrar dois usuários com a mesma senha
+# teste para validar que não é possível inserir senha menor que 6 caracteres
+def test_not_create_user_password_less_than_6(client):
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'testusername',
+            'email': 'teste01@teste.com',
+            'password': '12345'
+        },
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+    # Verifica se existe um erro relacionado ao campo "password"
+    assert any(
+        error["loc"][-1] == "password" and
+        error["msg"] == "Value error, Password must have at least 6 characters"
+        for error in response.json()["detail"]
+    )
+
+
+# teste para validar que não é possível cadastrar 2 usuários com o mesmo email
 # teste para ler usuários com sucesso
 def test_read_users(client):
     response = client.get('/users/')
@@ -66,7 +86,7 @@ def test_read_invalid_user_id_less_than_1(client):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-# teste para validar que não é possível ter id maior que a quantidade de usuários criados
+# validar de ID maior que total de usuários
 def test_read_invalid_user_id_grater_than_length(client):
     response = client.get(
         '/users/' + str(get_user_count() + 1)
@@ -82,7 +102,7 @@ def test_update_user(client):
         json={
             'username': 'testusername02',
             'email': 'teste@teste.com',
-            'password': '123',
+            'password': 'password',
         },
     )
 
@@ -94,28 +114,28 @@ def test_update_user(client):
     }
 
 
-# teste para validar que não é possível editar um usuário com id menor que 1
+# validar edição com ID fora do limite (menor)
 def test_update_user_with_invalid_id_less_than_1(client):
     response = client.put(
         '/users/0',
         json={
             'username': 'testusername02',
             'email': 'teste@teste.com',
-            'password': '123'
+            'password': 'password'
         }
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-# teste para validar que não é possível editar um usuário com id maior que a quantidade de usuários existentes
+# validar edição com ID fora do limite (maior)
 def test_update_user_with_invalid_id_grater_than_length(client):
     response = client.put(
         '/users/' + str(get_user_count() + 1),
         json={
             'username': 'testusername02',
             'email': 'teste@teste.com',
-            'password': '123'
+            'password': 'password'
         }
     )
 
@@ -129,7 +149,7 @@ def test_delete_user(client):
     assert response.json() == {'message': 'User deleted'}
 
 
-# teste para validar que não é possível deletar um usuário com id menor que 1
+# validar deleção com ID fora do limite (menor)
 def test_delete_user_with_invalid_id_less_than_1(client):
     response = client.delete(
         '/users/0'
@@ -138,7 +158,7 @@ def test_delete_user_with_invalid_id_less_than_1(client):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-# teste para validar que não é possível deletar um usuário com id maior que a quantidade de usuários existentes
+# validar deleção com ID fora do limite (maior)
 def test_delete_user_with_invalid_id_grater_than_length(client):
     response = client.delete(
         '/users/' + str(get_user_count() + 1)
