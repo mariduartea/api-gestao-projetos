@@ -7,7 +7,7 @@ from fastapi_zero.database import get_user_count
 
 # teste para criar um usuário com sucesso
 def test_create_user(client, create_user):
-    response = create_user
+    response = create_user()
     # Voltou o status code correto?
     assert response.status_code == HTTPStatus.CREATED
     # Validar o UserPublic
@@ -42,7 +42,8 @@ def test_not_create_user_password_less_than_6(client):
 # teste para validar que não é possível cadastrar 2 usuários com o mesmo email
 def test_not_create_with_same_email(client, create_user):
     if get_user_count() == 0:
-        create_user(client)
+        create_user()
+        # assert response.status_code == HTTPStatus.OK
     response = client.post(
         'users',
         json={
@@ -121,13 +122,53 @@ def test_update_user(client):
     }
 
 
+# teste para impedir edição com senha menor que 6 caracteres
+def test_not_update_user_password_less_than_6(client, create_user):
+    if get_user_count() == 1:
+        create_user()
+        # assert response.status_code == HTTPStatus.OK
+    response = client.put(
+        '/users/1',
+        json={
+            "username": "testusername",
+            "email": "teste@teste.com",
+            "password": "passw"
+        }
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    # Verifica se existe um erro relacionado ao campo "password"
+    assert any(
+        error["loc"][-1] == "password" and
+        error["msg"] == "Value error, Password must have at least 6 characters"
+        for error in response.json()["detail"]
+    )
+
+
+# teste para validar que não é possível editar 2 usuários com o mesmo email
+def test_not_update_with_same_email(client, create_user):
+    if get_user_count() == 0:
+        create_user()
+        # assert response.status_code == HTTPStatus.OK
+    response = client.post(
+        'users',
+        json={
+            "username": "testusername",
+            "email": "teste@teste.com",
+            "password": "password"
+        }
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json()["detail"] == "Email already registered"
+
+
 # validar edição com ID fora do limite (menor)
 def test_update_user_with_invalid_id_less_than_1(client):
     response = client.put(
         '/users/0',
         json={
             'username': 'testusername02',
-            'email': 'teste@teste.com',
+            'email': 'teste_invalido@teste.com',
             'password': 'password'
         }
     )
@@ -141,7 +182,7 @@ def test_update_user_with_invalid_id_grater_than_length(client):
         '/users/' + str(get_user_count() + 1),
         json={
             'username': 'testusername02',
-            'email': 'teste@teste.com',
+            'email': 'teste_invalido@teste.com',
             'password': 'password'
         }
     )
