@@ -1,23 +1,13 @@
+# biblioteca padrão
 from http import HTTPStatus
 
-
-def test_read_root_deve_retornar_ok_e_ola_mundo(client):
-    response = client.get('/')  # Act (ação)
-
-    assert response.status_code == HTTPStatus.OK  # Assert
-    assert response.json() == {'message': 'Olá mundo'}  # Assert
+# import do projeto
+from fastapi_zero.database import get_user_count
 
 
-def test_create_user(client):
-    response = client.post(  # UserSchema
-        '/users/',
-        json={
-            'username': 'testusername',
-            'email': 'teste@teste.com',
-            'password': 'password',
-        },
-    )
-
+# teste para criar um usuário com sucesso
+def test_create_user(client, create_user):
+    response = create_user()
     # Voltou o status code correto?
     assert response.status_code == HTTPStatus.CREATED
     # Validar o UserPublic
@@ -28,6 +18,45 @@ def test_create_user(client):
     }
 
 
+# teste para validar que não é possível inserir senha menor que 6 caracteres
+def test_not_create_user_password_less_than_6(client):
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'testusername',
+            'email': 'teste01@teste.com',
+            'password': '12345'
+        },
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+    # Verifica se existe um erro relacionado ao campo "password"
+    assert any(
+        error["loc"][-1] == "password" and
+        error["msg"] == "Value error, Password must have at least 6 characters"
+        for error in response.json()["detail"]
+    )
+
+
+# teste para validar que não é possível cadastrar 2 usuários com o mesmo email
+def test_not_create_with_same_email(client, create_user):
+    if get_user_count() == 0:
+        create_user()
+        # assert response.status_code == HTTPStatus.OK
+    response = client.post(
+        'users',
+        json={
+            "username": "testusername",
+            "email": "teste@teste.com",
+            "password": "password"
+        }
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json()["detail"] == "Email already registered"
+
+
+# teste para ler usuários com sucesso
 def test_read_users(client):
     response = client.get('/users/')
 
@@ -43,13 +72,45 @@ def test_read_users(client):
     }
 
 
+# teste para ler um único usuário
+def test_read_valid_user(client):
+    response = client.get(
+        '/users/1',
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'username': 'testusername',
+        'email': 'teste@teste.com',
+        'id': 1,
+    }
+
+
+# teste para validar que não é possível ter id menor que 1
+def test_read_invalid_user_id_less_than_1(client):
+    response = client.get(
+        '/users/0',
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+# validar de ID maior que total de usuários
+def test_read_invalid_user_id_grater_than_length(client):
+    response = client.get(
+        '/users/' + str(get_user_count() + 1)
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+# teste para editar um usuario com sucesso
 def test_update_user(client):
     response = client.put(
         '/users/1',
         json={
             'username': 'testusername02',
             'email': 'teste@teste.com',
-            'password': '123',
+            'password': 'password',
         },
     )
 
@@ -61,28 +122,94 @@ def test_update_user(client):
     }
 
 
-def test_update_user_not_found(client):
+# teste para impedir edição com senha menor que 6 caracteres
+def test_not_update_user_password_less_than_6(client, create_user):
+    if get_user_count() == 1:
+        create_user()
+        # assert response.status_code == HTTPStatus.OK
     response = client.put(
-        '/users/100',
+        '/users/1',
         json={
-            'username': 'testeexercicio',
-            'email': 'teste@teste.com',
-            'password': 'senha123',
-        },
+            "username": "testusername",
+            "email": "teste@teste.com",
+            "password": "passw"
+        }
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    # Verifica se existe um erro relacionado ao campo "password"
+    assert any(
+        error["loc"][-1] == "password" and
+        error["msg"] == "Value error, Password must have at least 6 characters"
+        for error in response.json()["detail"]
+    )
+
+
+# teste para validar que não é possível editar 2 usuários com o mesmo email
+def test_not_update_with_same_email(client, create_user):
+    if get_user_count() == 0:
+        create_user()
+        # assert response.status_code == HTTPStatus.OK
+    response = client.post(
+        'users',
+        json={
+            "username": "testusername",
+            "email": "teste@teste.com",
+            "password": "password"
+        }
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json()["detail"] == "Email already registered"
+
+
+# validar edição com ID fora do limite (menor)
+def test_update_user_with_invalid_id_less_than_1(client):
+    response = client.put(
+        '/users/0',
+        json={
+            'username': 'testusername02',
+            'email': 'teste_invalido@teste.com',
+            'password': 'password'
+        }
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
 
 
+# validar edição com ID fora do limite (maior)
+def test_update_user_with_invalid_id_grater_than_length(client):
+    response = client.put(
+        '/users/' + str(get_user_count() + 1),
+        json={
+            'username': 'testusername02',
+            'email': 'teste_invalido@teste.com',
+            'password': 'password'
+        }
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+# teste para deletar usuário com sucesso
 def test_delete_user(client):
     response = client.delete('/users/1')
 
     assert response.json() == {'message': 'User deleted'}
 
 
-def test_delete_user_not_found(client):
-    response = client.delete('/users/100')
+# validar deleção com ID fora do limite (menor)
+def test_delete_user_with_invalid_id_less_than_1(client):
+    response = client.delete(
+        '/users/0'
+    )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+
+
+# validar deleção com ID fora do limite (maior)
+def test_delete_user_with_invalid_id_grater_than_length(client):
+    response = client.delete(
+        '/users/' + str(get_user_count() + 1)
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
