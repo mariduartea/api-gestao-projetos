@@ -98,3 +98,21 @@ def token(client, user):
     )
 
     return response.json()['access_token']
+
+
+@pytest.fixture
+def create_user(client):
+    def make_user_request(
+            username="testusername",
+            email="teste@teste.com",
+            password="password"
+            ):
+        return client.post(
+            '/users/',
+            json={
+                'username': username,
+                'email': email,
+                'password': password
+            }
+        )
+    return make_user_request

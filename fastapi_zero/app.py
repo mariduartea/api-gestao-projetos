@@ -1,3 +1,4 @@
+# biblioteca padrão
 from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -19,13 +20,12 @@ from fastapi_zero.security import (
     get_password_hash,
     verify_password,
 )
+from fastapi_zero.utils.validators import (
+    check_already_registered_email,
+    check_user_not_found,
+)
 
 app = FastAPI()
-
-
-@app.get('/', status_code=HTTPStatus.OK, response_model=Message)
-def read_root():
-    return {'message': 'Olá mundo'}
 
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
@@ -70,6 +70,15 @@ def read_users(
     return {'users': user}
 
 
+@app.get('/users/{user_id}', response_model=UserPublic)
+def read_user(user_id: int):
+    check_user_not_found(user_id)
+    user_with_id = get_all_users()[user_id - 1]
+
+    return user_with_id
+
+
+# PENDENTE: TENTAR COLOCAR ID INVALIDO
 @app.put('/users/{user_id}', response_model=UserPublic)
 def update_user(
     user_id: int,
