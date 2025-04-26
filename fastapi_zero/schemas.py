@@ -14,10 +14,10 @@ class UserSchema(BaseModel):
     email: EmailStr
     password: str
 
-    @field_validator("password")
+    @field_validator('password')
     def password_must_be_long_enough(cls, value):
         if len(value) < settings.MIN_PASSWORD_LENGTH:
-            raise ValueError("Password must have at least 6 characters")
+            raise ValueError('Password must have at least 6 characters')
         return value
 
 

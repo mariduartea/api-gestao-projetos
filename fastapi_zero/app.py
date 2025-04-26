@@ -20,10 +20,11 @@ from fastapi_zero.security import (
     get_password_hash,
     verify_password,
 )
-from fastapi_zero.utils.validators import (
-    check_already_registered_email,
-    check_user_not_found,
-)
+
+# from fastapi_zero.utils.validators import (
+#     #check_already_registered_email,
+#     check_user_not_found,
+# )
 
 app = FastAPI()
 
@@ -71,9 +72,13 @@ def read_users(
 
 
 @app.get('/users/{user_id}', response_model=UserPublic)
-def read_user(user_id: int):
-    check_user_not_found(user_id)
-    user_with_id = get_all_users()[user_id - 1]
+def read_user(user_id: int, session: Session = Depends(get_session)):
+    user_with_id = session.scalar(select(User).where(User.id == user_id))
+
+    if not user_with_id:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado'
+        )
 
     return user_with_id
 
