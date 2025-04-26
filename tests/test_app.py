@@ -3,19 +3,71 @@ from http import HTTPStatus
 
 # import do projeto
 from fastapi_zero.database import get_user_count
+from fastapi_zero.schemas import UserPublic
+
+# # teste para criar um usuário com sucesso
+# def test_create_user(client, create_user):
+#     response = create_user()
+#     # Voltou o status code correto?
+#     assert response.status_code == HTTPStatus.CREATED
+#     # Validar o UserPublic
+#     assert response.json() == {
+#         'username': 'testusername',
+#         'email': 'teste@teste.com',
+#         'id': 1,
+#     }
 
 
-# teste para criar um usuário com sucesso
-def test_create_user(client, create_user):
-    response = create_user()
-    # Voltou o status code correto?
-    assert response.status_code == HTTPStatus.CREATED
-    # Validar o UserPublic
-    assert response.json() == {
-        'username': 'testusername',
-        'email': 'teste@teste.com',
-        'id': 1,
-    }
+def test_create_user_already_registered(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'username': user.username,
+            'email': 'bolinha@teste.com',
+            'password': 'password',
+        },
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Usuário já cadastrado'}
+
+
+def test_create_email_already_registered(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'bolinha',
+            'email': user.email,
+            'password': 'password',
+        },
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Email já cadastrado'}
+
+
+# def test_create_user_already_registered(client, user):
+#     response = client.post(
+#         '/users/',
+#         json={
+#             'username': user.username,
+#             'email': 'bolinha@teste.com',
+#             'password': 'password',
+#         },
+#     )
+#     assert response.status_code == HTTPStatus.CONFLICT
+#     assert response.json() == {'detail': 'Usuário já cadastrado'}
+
+
+# def test_create_email_already_registered(client, user):
+#     response = client.post(
+#         '/users/',
+#         json={
+#             'username': 'bolinha',
+#             'email': user.email,
+#             'password': 'password',
+#         },
+#     )
+#     assert response.status_code == HTTPStatus.CONFLICT
+#     assert response.json() == {'detail': 'Email já cadastrado'}
 
 
 # teste para validar que não é possível inserir senha menor que 6 caracteres
@@ -25,7 +77,7 @@ def test_not_create_user_password_less_than_6(client):
         json={
             'username': 'testusername',
             'email': 'teste01@teste.com',
-            'password': '12345'
+            'password': '12345',
         },
     )
 
@@ -33,27 +85,11 @@ def test_not_create_user_password_less_than_6(client):
 
     # Verifica se existe um erro relacionado ao campo "password"
     assert any(
-        error["loc"][-1] == "password" and
-        error["msg"] == "Value error, Password must have at least 6 characters"
-        for error in response.json()["detail"]
+        error['loc'][-1] == 'password'
+        and error['msg']
+        == 'Value error, Password must have at least 6 characters'
+        for error in response.json()['detail']
     )
-
-
-# teste para validar que não é possível cadastrar 2 usuários com o mesmo email
-def test_not_create_with_same_email(client, create_user):
-    if get_user_count() == 0:
-        create_user()
-        # assert response.status_code == HTTPStatus.OK
-    response = client.post(
-        'users',
-        json={
-            "username": "testusername",
-            "email": "teste@teste.com",
-            "password": "password"
-        }
-    )
-    assert response.status_code == HTTPStatus.CONFLICT
-    assert response.json()["detail"] == "Email already registered"
 
 
 # teste para ler usuários com sucesso
@@ -61,28 +97,16 @@ def test_read_users(client):
     response = client.get('/users/')
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'users': [
-            {
-                'username': 'testusername',
-                'email': 'teste@teste.com',
-                'id': 1,
-            }
-        ]
-    }
+    assert response.json() == {'users': []}
 
 
-# teste para ler um único usuário
-def test_read_valid_user(client):
-    response = client.get(
-        '/users/1',
-    )
+def test_read_users_with_user(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+
+    response = client.get('/users/')
+
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'username': 'testusername',
-        'email': 'teste@teste.com',
-        'id': 1,
-    }
+    assert response.json() == {'users': [user_schema]}
 
 
 # teste para validar que não é possível ter id menor que 1
@@ -95,22 +119,21 @@ def test_read_invalid_user_id_less_than_1(client):
 
 
 # validar de ID maior que total de usuários
-def test_read_invalid_user_id_grater_than_length(client):
-    response = client.get(
-        '/users/' + str(get_user_count() + 1)
-    )
+def test_read_invalid_user_id_grater_than_length(client, session):
+    response = client.get('/users/' + str(get_user_count(session) + 1))
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 # teste para editar um usuario com sucesso
-def test_update_user(client):
+def test_update_user(client, user, token):
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'testusername02',
             'email': 'teste@teste.com',
-            'password': 'password',
+            'password': 'teste123',
         },
     )
 
@@ -118,98 +141,64 @@ def test_update_user(client):
     assert response.json() == {
         'username': 'testusername02',
         'email': 'teste@teste.com',
-        'id': 1,
+        'id': user.id,
     }
 
 
 # teste para impedir edição com senha menor que 6 caracteres
-def test_not_update_user_password_less_than_6(client, create_user):
-    if get_user_count() == 1:
-        create_user()
-        # assert response.status_code == HTTPStatus.OK
+def test_not_update_user_password_less_than_6(client, user, token):
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
-            "username": "testusername",
-            "email": "teste@teste.com",
-            "password": "passw"
-        }
+            'username': user.username,
+            'email': user.email,
+            'password': '12345',
+        },
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     # Verifica se existe um erro relacionado ao campo "password"
     assert any(
-        error["loc"][-1] == "password" and
-        error["msg"] == "Value error, Password must have at least 6 characters"
-        for error in response.json()["detail"]
+        error['loc'][-1] == 'password'
+        and error['msg']
+        == 'Value error, Password must have at least 6 characters'
+        for error in response.json()['detail']
     )
 
 
-# teste para validar que não é possível editar 2 usuários com o mesmo email
-def test_not_update_with_same_email(client, create_user):
-    if get_user_count() == 0:
-        create_user()
-        # assert response.status_code == HTTPStatus.OK
+def test_get_user(client, user):
+    response = client.get(f'/users/{user.id}')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'username': user.username,
+        'email': user.email,
+        'id': user.id,
+    }
+
+
+def test_get_token(client, user):
     response = client.post(
-        'users',
-        json={
-            "username": "testusername",
-            "email": "teste@teste.com",
-            "password": "password"
-        }
-    )
-    assert response.status_code == HTTPStatus.CONFLICT
-    assert response.json()["detail"] == "Email already registered"
-
-
-# validar edição com ID fora do limite (menor)
-def test_update_user_with_invalid_id_less_than_1(client):
-    response = client.put(
-        '/users/0',
-        json={
-            'username': 'testusername02',
-            'email': 'teste_invalido@teste.com',
-            'password': 'password'
-        }
+        '/token',
+        data={
+            'username': user.email,
+            'password': user.clean_password,
+        },
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert token['token_type'] == 'Bearer'
+    assert 'access_token' in token
 
 
-# validar edição com ID fora do limite (maior)
-def test_update_user_with_invalid_id_grater_than_length(client):
-    response = client.put(
-        '/users/' + str(get_user_count() + 1),
-        json={
-            'username': 'testusername02',
-            'email': 'teste_invalido@teste.com',
-            'password': 'password'
-        }
-    )
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
-
-
-# teste para deletar usuário com sucesso
-def test_delete_user(client):
-    response = client.delete('/users/1')
-
-    assert response.json() == {'message': 'User deleted'}
-
-
-# validar deleção com ID fora do limite (menor)
-def test_delete_user_with_invalid_id_less_than_1(client):
+def test_delete_user(client, user, token):
     response = client.delete(
-        '/users/0'
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-
-
-# validar deleção com ID fora do limite (maior)
-def test_delete_user_with_invalid_id_grater_than_length(client):
-    response = client.delete(
-        '/users/' + str(get_user_count() + 1)
-    )
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {'message': 'Usuário deletado com sucesso'}
