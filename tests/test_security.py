@@ -2,14 +2,16 @@ from http import HTTPStatus
 
 from jwt import decode
 
-from fastapi_zero.security import ALGORITHM, SECERT_KEY, create_acess_token
+from fastapi_zero.security import create_acess_token, settings
 
 
 def test_jwt():
     data = {'sub': 'test@test.com'}
     token = create_acess_token(data)
 
-    result = decode(token, SECERT_KEY, algorithms=[ALGORITHM])
+    result = decode(
+        token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+    )
 
     assert result['sub'] == data['sub']
     assert result['exp']
