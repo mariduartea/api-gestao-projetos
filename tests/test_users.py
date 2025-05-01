@@ -108,9 +108,9 @@ def test_update_user(client, user, token):
 
 
 # teste para editar um usuario com sucesso
-def test_update_wrong_user(client, user, token):
+def test_update_wrong_user(client, other_user, token):
     response = client.put(
-        f'/users/{user.id + 1}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'testusername02',
@@ -168,9 +168,10 @@ def test_delete_user(client, user, token):
     assert response.json() == {'message': 'Usuário deletado com sucesso'}
 
 
-def test_delete_wrong_user(client, user, token):
+def test_delete_wrong_user(client, other_user, token):
     response = client.delete(
-        f'/users/{user.id + 1}',
+        f'/users/{other_user.id}',
+        # other user é o usuário que não é o dono do token criado no conftest
         headers={'Authorization': f'Bearer {token}'},
     )
 
