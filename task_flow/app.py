@@ -3,8 +3,8 @@ from http import HTTPStatus
 
 from fastapi import FastAPI
 
-from fastapi_zero.routers import auth, todos, users
-from fastapi_zero.schemas import Message
+from task_flow.routers import auth, todos, users
+from task_flow.schemas import Message
 
 app = FastAPI()
 

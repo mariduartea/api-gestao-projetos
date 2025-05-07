@@ -7,12 +7,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
-from sqlalchemy.pool import StaticPool
+from testcontainers.postgres import PostgresContainer
 
-from fastapi_zero.app import app
-from fastapi_zero.database import get_session
-from fastapi_zero.models import Todo, TodoState, User, table_registry
-from fastapi_zero.security import get_password_hash
+from task_flow.app import app
+from task_flow.database import get_session
+from task_flow.models import Todo, TodoState, User, table_registry
+from task_flow.security import get_password_hash
 
 
 class UserFactory(factory.Factory):
@@ -47,14 +47,19 @@ def client(session):  # o session é uma fixture que retorna um gerador
     app.dependency_overrides.clear()  # teardown
 
 
-@pytest.fixture
-def session():
-    engine = create_engine(
-        'sqlite:///:memory:',
-        connect_args={'check_same_thread': False},
-        poolclass=StaticPool,
-    )
+# fix que faz a conexão com o bd, executada 1x por sessão de teste
+@pytest.fixture(scope='session')
+def engine():
+    with PostgresContainer('postgres:16', driver='psycopg') as postgres:
+        _engine = create_engine(postgres.get_connection_url())
 
+        with _engine.begin():
+            yield _engine  # o yield delimita o setup, que roda antes do teste
+
+
+# fixture executada em cada teste, que cria a tabela e faz o drop
+@pytest.fixture
+def session(engine):
     table_registry.metadata.create_all(engine)
 
     # gerenciamento de contexto

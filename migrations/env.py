@@ -5,8 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from fastapi_zero.models import table_registry
-from fastapi_zero.settings import Settings
+from task_flow.models import table_registry
+from task_flow.settings import Settings
 
 config = context.config
 config.set_main_option('sqlalchemy.url', Settings().DATABASE_URL)

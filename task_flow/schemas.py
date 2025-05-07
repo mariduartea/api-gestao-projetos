@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
-from fastapi_zero.models import TodoState
-from fastapi_zero.settings import Settings
+from task_flow.models import TodoState
+from task_flow.settings import Settings
 
 settings = Settings()
 
