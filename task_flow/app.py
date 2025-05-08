@@ -15,4 +15,4 @@ app.include_router(todos.router)
 
 @app.get('/', status_code=HTTPStatus.OK, response_model=Message)
 def read_root():
-    return {'Hello': 'World'}
+    return {'message': 'Hello World'}
