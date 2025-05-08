@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from fastapi_zero.database import get_session
-from fastapi_zero.models import Todo, User
-from fastapi_zero.schemas import (
+from task_flow.database import get_session
+from task_flow.models import Todo, User
+from task_flow.schemas import (
     FilterTodo,
     Message,
     TodoList,
@@ -15,7 +15,7 @@ from fastapi_zero.schemas import (
     TodoSchema,
     TodoUpdate,
 )
-from fastapi_zero.security import get_current_user
+from task_flow.security import get_current_user
 
 router = APIRouter(prefix='/todos', tags=['todos'])
 

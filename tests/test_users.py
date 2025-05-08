@@ -2,8 +2,8 @@
 from http import HTTPStatus
 
 # import do projeto
-from fastapi_zero.database import get_user_count
-from fastapi_zero.schemas import UserPublic
+from task_flow.database import get_user_count
+from task_flow.schemas import UserPublic
 
 
 def test_create_user_already_registered(client, user):

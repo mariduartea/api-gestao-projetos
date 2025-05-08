@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi_zero.models import TodoState
+from task_flow.models import TodoState
 from tests.conftest import TodoFactory
 
 

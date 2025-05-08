@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from fastapi_zero.models import User
-from fastapi_zero.settings import Settings
+from task_flow.models import User
+from task_flow.settings import Settings
 
 engine = create_engine(Settings().DATABASE_URL)
 
