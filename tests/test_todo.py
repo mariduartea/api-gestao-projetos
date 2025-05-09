@@ -171,4 +171,4 @@ def test_patch_todo(client, session, user, token):
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json()['title'] == 'Updated Title'
+    assert response.json()['title'] == 'tururu'
