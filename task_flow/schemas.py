@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 from task_flow.models import TodoState
@@ -68,3 +70,14 @@ class TodoUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     state: TodoState | None = None
+
+
+class TeamSchema(BaseModel):
+    team_name: str
+    user_list: List[str]
+
+
+class TeamPublic(BaseModel):
+    id: int
+    team_name: str
+    users: List[UserPublic]
