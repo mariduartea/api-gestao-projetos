@@ -13,7 +13,7 @@ router = APIRouter(prefix='/teams', tags=['teams'])
 Session = Annotated[Session, Depends(get_session)]  # montando o objeto session
 
 
-@router.post('/', response_model=TeamPublic)
+@router.post('/', response_model=TeamPublic, status_code=HTTPStatus.CREATED)
 def create_teams(teams: TeamSchema, session: Session):
     users = (
         session.query(User).filter(User.username.in_(teams.user_list)).all()

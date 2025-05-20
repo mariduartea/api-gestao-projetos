@@ -39,7 +39,7 @@ class User:
     )
 
     teams: Mapped[list['Team']] = relationship(
-        'Team', secondary=teams_users, back_populates='users'
+        'Team', secondary=teams_users, back_populates='users', init=False
     )
 
 
