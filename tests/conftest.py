@@ -11,7 +11,7 @@ from testcontainers.postgres import PostgresContainer
 
 from task_flow.app import app
 from task_flow.database import get_session
-from task_flow.models import Todo, TodoState, User, table_registry
+from task_flow.models import Team, Todo, TodoState, User, table_registry
 from task_flow.security import get_password_hash
 
 
@@ -32,6 +32,13 @@ class TodoFactory(factory.Factory):
     description = factory.Faker('text')
     state = factory.fuzzy.FuzzyChoice(TodoState)
     user_id = 1
+
+
+class TeamFactory(factory.Factory):
+    class Meta:
+        model = Team
+
+    team_name = factory.Faker('text')
 
 
 @pytest.fixture
@@ -130,3 +137,23 @@ def token(client, user):
     )
 
     return response.json()['access_token']
+
+
+@pytest.fixture
+def users(session):
+    users = [UserFactory() for _ in range(3)]
+    session.add_all(users)
+    session.commit()
+    for user in users:
+        session.refresh(user)
+    return users
+
+
+@pytest.fixture
+def team_with_users(session, users):
+    team = TeamFactory()
+    team.users = users  # Relacionamento muitos-para-muitos
+    session.add(team)
+    session.commit()
+    session.refresh(team)
+    return team

@@ -107,7 +107,7 @@ def test_update_user(client, user, token):
     }
 
 
-# teste para editar um usuario com sucesso
+# teste para editar um usuario sem permissão
 def test_update_wrong_user(client, other_user, token):
     response = client.put(
         f'/users/{other_user.id}',

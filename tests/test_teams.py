@@ -38,3 +38,32 @@ def test_create_teams(client, token):
     assert usernames == {'mari', 'bia'}
     emails = {u['email'] for u in data['users']}
     assert emails == {'mari@email.com', 'bia@email.com'}
+
+
+def test_not_create_team_with_users_do_not_exist(client, token):
+    response = client.post(
+        '/teams',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'team_name': 'bolinha',
+            'user_list': ['lele', 'lala'],
+        },
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'One or more users do not exist'}
+
+
+def test_not_create_team_that_already_exist(
+    client, team_with_users, user, token
+):
+    response = client.post(
+        '/teams',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'team_name': team_with_users.team_name,
+            'user_list': [user.username]
+        },
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Team already created'}
