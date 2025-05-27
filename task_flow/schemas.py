@@ -81,3 +81,7 @@ class TeamPublic(BaseModel):
     id: int
     team_name: str
     users: List[UserPublic]
+
+
+class FilterTeam(BaseModel):
+    team_name: str | None = None

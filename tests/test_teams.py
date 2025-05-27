@@ -62,8 +62,31 @@ def test_not_create_team_that_already_exist(
         headers={'Authorization': f'Bearer {token}'},
         json={
             'team_name': team_with_users.team_name,
-            'user_list': [user.username]
+            'user_list': [user.username],
         },
     )
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json() == {'detail': 'Team already created'}
+
+
+def test_read_teams(client, token, team_with_users, users):
+    response = client.get(
+        '/teams',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) >= 1  # Pode haver mais times, mas pelo menos o criado
+
+    # Procura o time criado na resposta
+    team = next((t for t in data if t['id'] == team_with_users.id), None)
+    assert team is not None
+
+    assert team['team_name'] == team_with_users.team_name
+
+    # Compara os usernames dos usuários associados
+    returned_usernames = {u['username'] for u in team['users']}
+    expected_usernames = {u.username for u in users}
+    assert returned_usernames == expected_usernames

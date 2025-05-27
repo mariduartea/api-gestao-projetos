@@ -74,6 +74,8 @@ class Team:
         init=False, server_default=func.now(), onupdate=func.now()
     )
 
+    current_user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+
     users: Mapped[list[User]] = relationship(
         'User', secondary=teams_users, back_populates='teams', init=False
     )

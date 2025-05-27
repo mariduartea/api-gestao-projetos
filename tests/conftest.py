@@ -151,7 +151,7 @@ def users(session):
 
 @pytest.fixture
 def team_with_users(session, users):
-    team = TeamFactory()
+    team = TeamFactory(current_user_id=users[0].id)
     team.users = users  # Relacionamento muitos-para-muitos
     session.add(team)
     session.commit()
