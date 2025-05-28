@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from task_flow.utils.utils import assert_team_has_users, get_team_by_id
+
 
 def test_create_teams(client, token):
     # 1. Criação dos usuários necessários
@@ -77,16 +79,7 @@ def test_read_teams(client, token, team_with_users, users):
 
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 1  # Pode haver mais times, mas pelo menos o criado
-
-    # Procura o time criado na resposta
-    team = next((t for t in data if t['id'] == team_with_users.id), None)
+    team = get_team_by_id(data, team_with_users.id)
     assert team is not None
-
     assert team['team_name'] == team_with_users.team_name
-
-    # Compara os usernames dos usuários associados
-    returned_usernames = {u['username'] for u in team['users']}
-    expected_usernames = {u.username for u in users}
-    assert returned_usernames == expected_usernames
+    assert_team_has_users(team, users)

@@ -65,6 +65,30 @@ def read_teams(
     if team_filter.team_name:
         query = query.filter(Team.team_name.contains(team_filter.team_name))
 
-    teams = session.scalars(query).all()
+    db_teams = session.scalars(query).all()
+
+    if not db_teams: # Lista vazia é False
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Team does not exist',
+        )
+
+    return db_teams
+
+
+@router.get('/{team_id}', response_model=TeamPublic)
+def read_teams_with_id(
+    session: T_Session,
+    current_user: T_CurrentUser,
+    team_id: int
+):
+    query = select(Team).where(Team.id == team_id)
+    teams = session.scalar(query)
+
+    if teams is None:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Team does not exist',
+        )
 
     return teams
