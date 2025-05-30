@@ -1,6 +1,10 @@
 from http import HTTPStatus
 
-from task_flow.utils.utils import assert_team_has_users, get_team_by_id
+from task_flow.utils.utils import (
+    assert_team_has_users,
+    get_team_by_id,
+    get_team_count,
+)
 
 
 def test_create_teams(client, token):
@@ -42,7 +46,7 @@ def test_create_teams(client, token):
     assert emails == {'mari@email.com', 'bia@email.com'}
 
 
-def test_not_create_team_with_users_do_not_exist(client, token):
+def test_not_create_team_with_users_does_not_exist(client, token):
     response = client.post(
         '/teams',
         headers={'Authorization': f'Bearer {token}'},
@@ -83,3 +87,37 @@ def test_read_teams(client, token, team_with_users, users):
     assert team is not None
     assert team['team_name'] == team_with_users.team_name
     assert_team_has_users(team, users)
+
+
+def test_read_teams_that_does_not_exist(client, token):
+    response = client.get(
+        '/teams',
+        headers={'Authorization': f'Bearer {token}'},
+        params={'team_name': 'newteam'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Team does not exist'}
+
+
+def test_read_teams_with_id(client, token, team_with_users):
+    response = client.get(
+        f'/teams/{team_with_users.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+
+    data = response.json()
+    assert data['id'] == team_with_users.id
+    assert data['team_name'] == team_with_users.team_name
+
+
+def test_read_teams_with_id_that_does_not_exist(client, token, session):
+    invalid_id = get_team_count(session) + 1
+    response = client.get(
+        f'/teams/{invalid_id}', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Team does not exist'}
