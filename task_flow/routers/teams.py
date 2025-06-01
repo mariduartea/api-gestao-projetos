@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 
 from task_flow.database import get_session
 from task_flow.models import Team, User
-from task_flow.schemas import FilterTeam, TeamPublic, TeamSchema
+from task_flow.schemas import (
+    FilterTeam,
+    TeamPublic,
+    TeamSchema,
+    TeamUpdateSchema,
+)
 from task_flow.security import get_current_user
 
 router = APIRouter(
@@ -67,7 +72,7 @@ def read_teams(
 
     db_teams = session.scalars(query).all()
 
-    if not db_teams: # Lista vazia é False
+    if not db_teams:  # Lista vazia é False
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail='Team does not exist',
@@ -78,9 +83,7 @@ def read_teams(
 
 @router.get('/{team_id}', response_model=TeamPublic)
 def read_teams_with_id(
-    session: T_Session,
-    current_user: T_CurrentUser,
-    team_id: int
+    session: T_Session, current_user: T_CurrentUser, team_id: int
 ):
     query = select(Team).where(Team.id == team_id)
     teams = session.scalar(query)
@@ -92,3 +95,56 @@ def read_teams_with_id(
         )
 
     return teams
+
+
+@router.patch('/{team_id}', response_model=TeamPublic)
+def update_team(
+    session: T_Session,
+    current_user: T_CurrentUser,
+    team_id: int,
+    team_update: TeamUpdateSchema,
+):
+    query = select(Team).where(Team.id == team_id)
+    team = session.scalar(query)
+    if not team:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Team does not exist',
+        )
+
+    # Atualiza o nome do time
+    if team_update.team_name is not None:
+        existing_team = session.scalar(
+            select(Team).where(
+                Team.team_name == team_update.team_name, Team.id != team_id
+            )
+        )  # Não considerar o próprio time
+        if existing_team:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail='Team name alreaty exists',
+            )
+        team.team_name = team_update.team_name
+
+    # Atualiza os usuários do time
+    if team_update.user_list is not None:
+        users = (
+            session.query(User)
+            .filter(User.username.in_(team_update.user_list))
+            .all()
+        )
+        if len(users) != len(team_update.user_list):
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail='Users not found',
+            )
+        if not users:
+            raise HTTPException(
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                detail='Team must have at least one user',
+            )
+        team.users = users
+
+    session.commit()
+    session.refresh(team)
+    return team  # Sempre retorne o objeto atualizado

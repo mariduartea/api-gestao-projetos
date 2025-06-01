@@ -83,5 +83,10 @@ class TeamPublic(BaseModel):
     users: List[UserPublic]
 
 
+class TeamUpdateSchema(BaseModel):
+    team_name: str | None = None
+    user_list: list[str] | None = None
+
+
 class FilterTeam(BaseModel):
     team_name: str | None = None
