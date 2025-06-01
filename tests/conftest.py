@@ -157,3 +157,13 @@ def team_with_users(session, users):
     session.commit()
     session.refresh(team)
     return team
+
+
+@pytest.fixture
+def another_team_with_same_name(session, users):
+    team = TeamFactory(team_name='nome_duplicado', current_user_id=users[1].id)
+    team.users = users
+    session.add(team)
+    session.commit()
+    session.refresh(team)
+    return team

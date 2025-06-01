@@ -113,7 +113,7 @@ def test_read_teams_with_id(client, token, team_with_users):
     assert data['team_name'] == team_with_users.team_name
 
 
-def test_read_teams_with_id_that_does_not_exist(client, token, session):
+def test_read_teams_with_id_grater_than_length(client, token, session):
     invalid_id = get_team_count(session) + 1
     response = client.get(
         f'/teams/{invalid_id}', headers={'Authorization': f'Bearer {token}'}
@@ -121,3 +121,133 @@ def test_read_teams_with_id_that_does_not_exist(client, token, session):
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Team does not exist'}
+
+
+def test_read_teams_with_id_less_than_1(client, token):
+    invalid_id = 0
+    response = client.get(
+        f'/teams/{invalid_id}', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Team does not exist'}
+
+
+# atualizar um time cujo id não existe
+# com id +1
+def test_update_teams_with_id_grater_than_length(
+    client, token, session, users
+):
+    invalid_id = get_team_count(session) + 1
+    response = client.patch(
+        f'/teams/{invalid_id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'team_name': 'newTeamName',
+            'user_list': [user.username for user in users],
+        },
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Team does not exist'}
+
+
+# atualizar um time cujo id não existe
+# com id = 0
+def test_update_teams_with_id_less_than_1(client, token, users):
+    invalid_id = 0
+    response = client.patch(
+        f'/teams/{invalid_id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'team_name': 'newTeamName',
+            'user_list': [user.username for user in users],
+        },
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Team does not exist'}
+
+
+# atualizar o nome do time com sucesso
+def test_update_team_name(client, token, team_with_users, users):
+    response = client.patch(
+        f'/teams/{team_with_users.id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={'team_name': 'newTeamName'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data['id'] == team_with_users.id
+    assert data['team_name'] == 'newTeamName'
+    assert_team_has_users(data, users)
+
+
+# atualizar o nome do time com um que ja existe
+def test_update_team_name_with_already_existed_name(
+    client, token, team_with_users, users, another_team_with_same_name
+):
+    response = client.patch(
+        f'/teams/{team_with_users.id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={'team_name': another_team_with_same_name.team_name},
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Team name alreaty exists'}
+
+
+# atualizar time adicionando um novo usuário
+def test_update_team_user_list_adding_a_new_user(
+    client, token, team_with_users, users, other_user
+):
+    response = client.patch(
+        f'/teams/{team_with_users.id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'user_list': [user.username for user in users]
+            + [other_user.username],
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data['id'] == team_with_users.id
+    # Valide que todos os usuários (antigos + novo) estão no time
+    returned_usernames = {u['username'] for u in data['users']}
+    expected_usernames = {user.username for user in users} | {
+        other_user.username
+    }
+    assert returned_usernames == expected_usernames
+
+
+# atualizar time adicionando um novo usuário
+def test_update_team_user_list_removing_a_user(
+    client, token, team_with_users, users
+):
+    # Remove o primeiro usuário da lista
+    removed_user = users[0]
+    remaining_users = users[1:]
+
+    response = client.patch(
+        f'/teams/{team_with_users.id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={'user_list': [user.username for user in remaining_users]},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data['id'] == team_with_users.id
+
+    returned_usernames = {u['username'] for u in data['users']}
+    expected_usernames = {user.username for user in remaining_users}
+    assert returned_usernames == expected_usernames
+    assert removed_user.username not in returned_usernames
+
+
+# atulizar os usuarios:
+# remover um usuario
+# adicionar um usuario que nao existe detail='Users not found',
+# deixar a lista de usuarios vazia
+#   detail='Team must have at least one user'
