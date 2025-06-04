@@ -9,6 +9,7 @@ from task_flow.database import get_session
 from task_flow.models import Team, User
 from task_flow.schemas import (
     FilterTeam,
+    Message,
     TeamPublic,
     TeamSchema,
     TeamUpdateSchema,
@@ -75,7 +76,7 @@ def read_teams(
     if not db_teams:  # Lista vazia é False
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='Team does not exist',
+            detail='Team not found',
         )
 
     return db_teams
@@ -91,7 +92,7 @@ def read_teams_with_id(
     if teams is None:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='Team does not exist',
+            detail='Team not found',
         )
 
     return teams
@@ -109,7 +110,7 @@ def update_team(
     if not team:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='Team does not exist',
+            detail='Team not found',
         )
 
     # Atualiza o nome do time
@@ -148,3 +149,22 @@ def update_team(
     session.commit()
     session.refresh(team)
     return team  # Sempre retorne o objeto atualizado
+
+
+@router.delete('/{team_id}', response_model=Message)
+def delete_team(session: T_Session, current_user: T_CurrentUser, team_id: int):
+    team = session.scalar(
+        select(Team).where(
+            Team.current_user_id == current_user.id, Team.id == team_id
+        )
+    )
+
+    if not team:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Team not found'
+        )
+
+    session.delete(team)
+    session.commit()
+
+    return {'message': 'Team deleted successfully'}

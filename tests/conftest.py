@@ -139,13 +139,32 @@ def token(client, user):
     return response.json()['access_token']
 
 
+# fixture criada para garantir que o token
+# de team_with_users esteja sendo passado corretamente
+@pytest.fixture
+def owner_token(client, users):
+    # users[0] é o dono do time em team_with_users
+    user = users[0]
+    response = client.post(
+        '/auth/token',
+        data={
+            'username': user.email,
+            'password': user.clean_password,
+        },
+    )
+
+    return response.json()['access_token']
+
+
 @pytest.fixture
 def users(session):
-    users = [UserFactory() for _ in range(3)]
+    pwd = 'testtest'
+    users = [UserFactory(password=get_password_hash(pwd)) for _ in range(3)]
     session.add_all(users)
     session.commit()
     for user in users:
         session.refresh(user)
+        user.clean_password = pwd
     return users
 
 
