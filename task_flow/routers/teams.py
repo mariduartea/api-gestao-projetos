@@ -105,12 +105,18 @@ def update_team(
     team_id: int,
     team_update: TeamUpdateSchema,
 ):
-    query = select(Team).where(Team.id == team_id)
-    team = session.scalar(query)
+    team = session.scalar(select(Team).where(Team.id == team_id))
     if not team:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail='Team not found',
+        )
+
+    if team.current_user_id != current_user.id:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='You are not allowed to update this team. '
+            'Only the team owner can perform this action.',
         )
 
     # Atualiza o nome do time
@@ -153,15 +159,18 @@ def update_team(
 
 @router.delete('/{team_id}', response_model=Message)
 def delete_team(session: T_Session, current_user: T_CurrentUser, team_id: int):
-    team = session.scalar(
-        select(Team).where(
-            Team.current_user_id == current_user.id, Team.id == team_id
-        )
-    )
+    team = session.scalar(select(Team).where(Team.id == team_id))
 
     if not team:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Team not found'
+        )
+
+    if team.current_user_id != current_user.id:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='You are not allowed to delete this team. '
+            'Only the team owner can perform this action.',
         )
 
     session.delete(team)

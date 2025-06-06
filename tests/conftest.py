@@ -157,6 +157,17 @@ def owner_token(client, users):
 
 
 @pytest.fixture
+def another_owner_token(client, users):
+    # users[1] é o dono do time em another_team_with_same_name
+    user = users[1]
+    response = client.post(
+        '/auth/token',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+    return response.json()['access_token']
+
+
+@pytest.fixture
 def users(session):
     pwd = 'testtest'
     users = [UserFactory(password=get_password_hash(pwd)) for _ in range(3)]

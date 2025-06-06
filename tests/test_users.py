@@ -6,7 +6,7 @@ from task_flow.database import get_user_count
 from task_flow.schemas import UserPublic
 
 
-def test_create_user_already_registered(client, user):
+def test_not_create_user_already_registered(client, user):
     response = client.post(
         '/users/',
         json={
@@ -19,7 +19,7 @@ def test_create_user_already_registered(client, user):
     assert response.json() == {'detail': 'Usuário já cadastrado'}
 
 
-def test_create_email_already_registered(client, user):
+def test_not_create_email_already_registered(client, user):
     response = client.post(
         '/users/',
         json={
@@ -72,7 +72,7 @@ def test_read_users_with_user(client, user):
 
 
 # teste para validar que não é possível ter id menor que 1
-def test_read_invalid_user_id_less_than_1(client):
+def test_not_read_invalid_user_id_less_than_1(client):
     response = client.get(
         '/users/0',
     )
@@ -81,7 +81,7 @@ def test_read_invalid_user_id_less_than_1(client):
 
 
 # validar de ID maior que total de usuários
-def test_read_invalid_user_id_grater_than_length(client, session):
+def test_not_read_invalid_user_id_grater_than_length(client, session):
     response = client.get('/users/' + str(get_user_count(session) + 1))
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -108,7 +108,7 @@ def test_update_user(client, user, token):
 
 
 # teste para editar um usuario sem permissão
-def test_update_wrong_user(client, other_user, token):
+def test_not_update_wrong_user(client, other_user, token):
     response = client.put(
         f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
@@ -168,7 +168,7 @@ def test_delete_user(client, user, token):
     assert response.json() == {'message': 'Usuário deletado com sucesso'}
 
 
-def test_delete_wrong_user(client, other_user, token):
+def test_not_delete_wrong_user(client, other_user, token):
     response = client.delete(
         f'/users/{other_user.id}',
         # other user é o usuário que não é o dono do token criado no conftest
