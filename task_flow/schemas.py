@@ -90,3 +90,12 @@ class TeamUpdateSchema(BaseModel):
 
 class FilterTeam(BaseModel):
     team_name: str | None = None
+
+class ProjectSchema(BaseModel):
+    project_name: str
+    team_list: List[str]
+
+class ProjectPublic(BaseModel):
+    id: int
+    project_name: str
+    teams: List[TeamPublic]

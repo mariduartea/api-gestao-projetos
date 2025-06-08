@@ -19,7 +19,6 @@ from task_flow.security import get_current_user
 router = APIRouter(
     prefix='/teams',
     tags=['teams'],
-    #    dependencies=[Depends(get_current_user)]
 )
 
 T_Session = Annotated[Session, Depends(get_session)]
@@ -45,7 +44,7 @@ def create_teams(
     )
 
     if db_teams:
-        if db_teams.team_name == teams.team_name:
+        # if db_teams.team_name == teams.team_name:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
                 detail='Team already created',
