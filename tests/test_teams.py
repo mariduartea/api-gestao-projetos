@@ -341,7 +341,7 @@ def test_cannot_delete_team_of_another_user(
 ):
     response = client.delete(
         f'/teams/{team_with_users.id}',
-        headers={'Authorization': f'Bearer {another_owner_token}'}
+        headers={'Authorization': f'Bearer {another_owner_token}'},
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN

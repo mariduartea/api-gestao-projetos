@@ -11,7 +11,15 @@ from testcontainers.postgres import PostgresContainer
 
 from task_flow.app import app
 from task_flow.database import get_session
-from task_flow.models import Team, Todo, TodoState, User, table_registry
+from task_flow.models import (
+    Project,
+    Team,
+    Todo,
+    TodoState,
+    User,
+    table_registry,
+)
+from task_flow.schemas import TeamSchema
 from task_flow.security import get_password_hash
 
 
@@ -38,7 +46,14 @@ class TeamFactory(factory.Factory):
     class Meta:
         model = Team
 
-    team_name = factory.Faker('text')
+    team_name = factory.Faker('company')
+
+
+class ProjectFactory(factory.Factory):
+    class Meta:
+        model = Project
+
+    project_name = factory.Faker('color_name')
 
 
 @pytest.fixture
@@ -190,6 +205,27 @@ def team_with_users(session, users):
 
 
 @pytest.fixture
+def team_list(session, users):
+    teams = []
+    for i in range(3):
+        team = TeamFactory(
+            team_name=f'team{i}', current_user_id=users[i % len(users)].id
+        )
+        team.users = [users[i % len(users)]]
+        session.add(team)
+        teams.append(team)
+    session.commit()
+    for team in teams:
+        session.refresh(team)
+    return teams  # retorna os objetos do model Team diretamente
+
+
+@pytest.fixture
+def team_dict_list(team_list):
+    return [TeamSchema.from_orm(team).dict() for team in team_list]
+
+
+@pytest.fixture
 def another_team_with_same_name(session, users):
     team = TeamFactory(team_name='nome_duplicado', current_user_id=users[1].id)
     team.users = users
@@ -197,3 +233,13 @@ def another_team_with_same_name(session, users):
     session.commit()
     session.refresh(team)
     return team
+
+
+@pytest.fixture
+def projects_with_teams(session, team_list, users):
+    project = ProjectFactory(current_user_id=users[0].id)
+    project.teams = team_list  # Relacionamento muitos-para-muitos
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+    return project

@@ -90,6 +90,7 @@ class Team:
         'Project', secondary=projects_teams, back_populates='teams', init=False
     )
 
+
 @table_registry.mapped_as_dataclass
 class Project:
     __tablename__ = 'projects'

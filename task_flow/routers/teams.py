@@ -45,10 +45,10 @@ def create_teams(
 
     if db_teams:
         # if db_teams.team_name == teams.team_name:
-            raise HTTPException(
-                status_code=HTTPStatus.CONFLICT,
-                detail='Team already created',
-            )
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail='Team already created',
+        )
 
     db_teams = Team(team_name=teams.team_name, current_user_id=current_user.id)
     db_teams.users = users
