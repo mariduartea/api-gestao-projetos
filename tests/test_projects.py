@@ -1,7 +1,9 @@
 from http import HTTPStatus
 
+from task_flow.utils.utils import assert_project_has_teams, get_project_by_id
 
-# TESTES DE CRIAR PROJETOS #################
+
+# >>>>>> TESTES DE CRIAR PROJETOS
 def test_create_projects(client, team_list, token):
     response = client.post(
         '/projects',
@@ -45,3 +47,36 @@ def test_not_create_team_that_already_exist(
     )
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json() == {'detail': 'Project already created'}
+
+
+# >>>>>> TESTES DE LER PROJETOS
+
+
+def test_read_projects(client, token, projects_with_teams, team_list):
+    response = client.get(
+        '/projects',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    project = get_project_by_id(data, projects_with_teams.id)
+    assert project is not None
+    assert project['project_name'] == projects_with_teams.project_name
+    assert_project_has_teams(project, team_list)
+
+
+# Ler projeto pelo nome
+def test_read_project_with_name(client, token, projects_with_teams, team_list):
+    response = client.get(
+        f'/projects/?project_name={projects_with_teams.project_name}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    print(response.json())
+
+    # dicionario
+    assert data[0]['id'] == projects_with_teams.id
+    assert data[0]['project_name'] == projects_with_teams.project_name

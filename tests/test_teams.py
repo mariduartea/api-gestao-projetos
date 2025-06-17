@@ -6,6 +6,7 @@ from task_flow.utils.utils import (
 )
 
 
+# >>>>>> TESTES DE CRIAR TIMES
 def test_create_teams(client, token):
     # 1. Criação dos usuários necessários
     users_to_create = [
@@ -74,6 +75,7 @@ def test_not_create_team_that_already_exist(
     assert response.json() == {'detail': 'Team already created'}
 
 
+# >>>>>> TESTES DE LER TIMES
 def test_read_teams(client, token, team_with_users, users):
     response = client.get(
         '/teams',
@@ -88,6 +90,7 @@ def test_read_teams(client, token, team_with_users, users):
     assert_team_has_users(team, users)
 
 
+# Ler time pelo nome
 def test_not_read_teams_that_does_not_exist(client, token):
     response = client.get(
         '/teams',
@@ -134,6 +137,9 @@ def test_not_read_teams_with_id_less_than_1(client, token):
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Team not found'}
+
+
+# >>>>>> TESTES DE ATUALIZAR TIMES
 
 
 # atualizar o nome do time com sucesso
@@ -296,6 +302,9 @@ def test_cannot_update_team_of_another_user(
         'You are not allowed to update this team. '
         'Only the team owner can perform this action.'
     )
+
+
+# >>>>>> TESTES DE DELETAR TIMES
 
 
 # deletar time com sucesso

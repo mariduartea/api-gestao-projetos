@@ -101,3 +101,7 @@ class ProjectPublic(BaseModel):
     id: int
     project_name: str
     teams: List[TeamPublic]
+
+
+class FilterProject(BaseModel):
+    project_name: str | None = None
