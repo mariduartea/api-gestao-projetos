@@ -75,7 +75,6 @@ def test_read_project_with_name(client, token, projects_with_teams, team_list):
 
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    print(response.json())
 
     # dicionario
     assert data[0]['id'] == projects_with_teams.id
