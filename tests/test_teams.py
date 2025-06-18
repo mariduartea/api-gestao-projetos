@@ -92,8 +92,9 @@ def test_read_teams(client, token, team_with_users, users):
 
 def test_read_team_with_name(client, token, team_with_users, users):
     response = client.get(
-        f'/teams/?team_name={team_with_users.team_name}',
+        '/teams/',
         headers={'Authorization': f'Bearer {token}'},
+        params={'team_name': team_with_users.team_name},
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -104,7 +105,7 @@ def test_read_team_with_name(client, token, team_with_users, users):
     assert data[0]['team_name'] == team_with_users.team_name
 
 
-# Ler time pelo nome
+# Ler time pelo nome errado
 def test_not_read_teams_that_does_not_exist(client, token):
     response = client.get(
         '/teams',

@@ -69,8 +69,10 @@ def test_read_projects(client, token, projects_with_teams, team_list):
 # Ler projeto pelo nome
 def test_read_project_with_name(client, token, projects_with_teams, team_list):
     response = client.get(
-        f'/projects/?project_name={projects_with_teams.project_name}',
+        # f'/projects/?project_name={projects_with_teams.project_name}',
+        '/projects',
         headers={'Authorization': f'Bearer {token}'},
+        params={'project_name': projects_with_teams.project_name},
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -79,3 +81,15 @@ def test_read_project_with_name(client, token, projects_with_teams, team_list):
     # dicionario
     assert data[0]['id'] == projects_with_teams.id
     assert data[0]['project_name'] == projects_with_teams.project_name
+
+
+# Ler projeto pelo nome errado
+def test_not_read_project_that_does_not_exist(client, token):
+    response = client.get(
+        '/projects',
+        headers={'Authorization': f'Bearer {token}'},
+        params={'project_name': 'newproject'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Project not found'}
