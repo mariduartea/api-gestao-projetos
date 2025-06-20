@@ -50,8 +50,6 @@ def test_not_create_team_that_already_exist(
 
 
 # >>>>>> TESTES DE LER PROJETOS
-
-
 def test_read_projects(client, token, projects_with_teams, team_list):
     response = client.get(
         '/projects',
@@ -93,3 +91,17 @@ def test_not_read_project_that_does_not_exist(client, token):
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Project not found'}
+
+
+def test_read_project_with_id(client, token, projects_with_teams, team_list):
+    response = client.get(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    project = get_project_by_id(data[0], projects_with_teams.id)
+    assert project is not None
+    assert project['project_name'] == projects_with_teams.project_name
+    assert_project_has_teams(project, team_list)

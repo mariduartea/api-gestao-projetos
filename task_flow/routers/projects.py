@@ -85,19 +85,19 @@ def read_projects(
 
     return db_projects
 
+
 @router.get('/{projects_id}', response_model=ProjectPublic)
 def read_projects_with_id(
-        session: T_Session,
-        projects_id: int,
-        current_user: T_CurrentUser,
+    session: T_Session,
+    projects_id: int,
+    current_user: T_CurrentUser,
 ):
     query = select(Project).where(Project.id == projects_id)
     project = session.scalar(query)
     # projects é uma lista
     if project is None:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='Project not found'
+            status_code=HTTPStatus.NOT_FOUND, detail='Project not found'
         )
 
     return project
