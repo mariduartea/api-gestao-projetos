@@ -101,7 +101,31 @@ def test_read_project_with_id(client, token, projects_with_teams, team_list):
 
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    project = get_project_by_id(data[0], projects_with_teams.id)
-    assert project is not None
-    assert project['project_name'] == projects_with_teams.project_name
-    assert_project_has_teams(project, team_list)
+    assert data['id'] == projects_with_teams.id
+    assert data['project_name'] == projects_with_teams.project_name
+
+
+def test_not_read_project_with_id_greater_than_length(
+    client, token, projects_with_teams, team_list
+):
+    invalid_id = projects_with_teams.id + 1
+    response = client.get(
+        f'/projects/{invalid_id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Project not found'}
+
+
+def test_not_read_project_with_id_less_than_1(
+        client, token, projects_with_teams, team_list
+):
+    invalid_id = 0
+    response = client.get(
+        f'/projects/{invalid_id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Project not found'}
