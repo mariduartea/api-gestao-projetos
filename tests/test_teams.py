@@ -6,6 +6,7 @@ from task_flow.utils.utils import (
 )
 
 
+# >>>>>> TESTES DE CRIAR TIMES
 def test_create_teams(client, token):
     # 1. Criação dos usuários necessários
     users_to_create = [
@@ -74,6 +75,7 @@ def test_not_create_team_that_already_exist(
     assert response.json() == {'detail': 'Team already created'}
 
 
+# >>>>>> TESTES DE LER TIMES
 def test_read_teams(client, token, team_with_users, users):
     response = client.get(
         '/teams',
@@ -88,6 +90,22 @@ def test_read_teams(client, token, team_with_users, users):
     assert_team_has_users(team, users)
 
 
+def test_read_team_with_name(client, token, team_with_users, users):
+    response = client.get(
+        '/teams/',
+        headers={'Authorization': f'Bearer {token}'},
+        params={'team_name': team_with_users.team_name},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+
+    # dicionario
+    assert data[0]['id'] == team_with_users.id
+    assert data[0]['team_name'] == team_with_users.team_name
+
+
+# Ler time pelo nome errado
 def test_not_read_teams_that_does_not_exist(client, token):
     response = client.get(
         '/teams',
@@ -134,6 +152,9 @@ def test_not_read_teams_with_id_less_than_1(client, token):
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Team not found'}
+
+
+# >>>>>> TESTES DE ATUALIZAR TIMES
 
 
 # atualizar o nome do time com sucesso
@@ -298,6 +319,9 @@ def test_cannot_update_team_of_another_user(
     )
 
 
+# >>>>>> TESTES DE DELETAR TIMES
+
+
 # deletar time com sucesso
 def test_delete_team_successfully(client, owner_token, team_with_users):
     response = client.delete(
@@ -341,7 +365,7 @@ def test_cannot_delete_team_of_another_user(
 ):
     response = client.delete(
         f'/teams/{team_with_users.id}',
-        headers={'Authorization': f'Bearer {another_owner_token}'}
+        headers={'Authorization': f'Bearer {another_owner_token}'},
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN

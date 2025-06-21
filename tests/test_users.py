@@ -6,6 +6,21 @@ from task_flow.database import get_user_count
 from task_flow.schemas import UserPublic
 
 
+def test_create_user(client):
+    response = client.post(
+        '/users',
+        json={
+            'username': 'bolinha_teste',
+            'email': 'bolinha@teste.com',
+            'password': 'password',
+        },
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    data = response.json()
+    assert data['username'] == 'bolinha_teste'
+    assert data['email'] == 'bolinha@teste.com'
+
+
 def test_not_create_user_already_registered(client, user):
     response = client.post(
         '/users/',
@@ -60,6 +75,17 @@ def test_read_users(client):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'users': []}
+
+
+def test_read_one_user(client, user):
+    response = client.get(f'/users/{user.id}')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'username': user.username,
+        'email': user.email,
+        'id': user.id,
+    }
 
 
 def test_read_users_with_user(client, user):
@@ -145,17 +171,6 @@ def test_not_update_user_password_less_than_6(client, user, token):
         == 'Value error, Password must have at least 6 characters'
         for error in response.json()['detail']
     )
-
-
-def test_get_user(client, user):
-    response = client.get(f'/users/{user.id}')
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'username': user.username,
-        'email': user.email,
-        'id': user.id,
-    }
 
 
 def test_delete_user(client, user, token):
