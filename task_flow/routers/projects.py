@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from task_flow.database import get_session
 from task_flow.models import Project, Team, User
-from task_flow.schemas import FilterProject, ProjectPublic, ProjectSchema
+from task_flow.schemas import FilterProject, ProjectPublic, ProjectSchema, ProjectUpdateSchema
 from task_flow.security import get_current_user
 
 router = APIRouter(
@@ -100,4 +100,65 @@ def read_projects_with_id(
             status_code=HTTPStatus.NOT_FOUND, detail='Project not found'
         )
 
+    return project
+
+
+@router.patch('/{projects_id}', response_model=ProjectPublic)
+def update_project(
+    session: T_Session,
+    current_user: T_CurrentUser,
+    project_id: int,
+    project_update: ProjectUpdateSchema
+):
+    project = session.scalar(select(Project).where(Project.id == project_id))
+    # Inserir project_id inválido
+    if not project:
+        raise HTTPException(
+            status_code = HTTPStatus.NOT_FOUND,
+            detail = 'Project not found'
+        )
+    # Inserir um projeto não criado pelo usuário logado
+    if project.current_user_id != current_user.id:
+        raise HTTPException(
+            status_code = HTTPStatus.FORBIDDEN,
+            detail = 'You are not allowed to update this project. '
+            'Only the team owner can perform this action.'
+        )
+
+    if project_update.project_name is not None:
+        existing_project = session.scalar(
+            select(Project).where(
+                Project.project_name == project_update.project_name, Project.id != project_id
+            )
+        )
+        # não permitir que altere o nome do projeto para um outro que já exista
+        if existing_project:
+            raise HTTPException(
+                status_code = HTTPStatus.CONFLICT,
+                detail = 'Project name already exists',
+            )
+        # alterar o nome do projeto com sucesso
+        project.project_name = project_update.project_name
+
+    # Atualiza os times do projeto
+    if project_update.team_list is not None:
+        # busca no banco os times escolhidos
+        teams = (
+            session.query(Team)
+            .filter(Team.team_name.in_(project_update.team_list))
+            .all()
+        )
+        if len(teams) != len(project_update.team_list):
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail='Teams not found'
+            )
+        if not teams:
+            raise HTTPException(
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                detail='Project must have at least one team',
+            )
+        project.teams = teams
+    session.commit()
+    session.refresh(project)
     return project
