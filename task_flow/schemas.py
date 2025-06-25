@@ -110,4 +110,3 @@ class FilterProject(BaseModel):
 class ProjectUpdateSchema(BaseModel):
     project_name: str | None = None
     team_list: list[str] | None = None
-

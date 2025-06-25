@@ -119,7 +119,7 @@ def test_not_read_project_with_id_greater_than_length(
 
 
 def test_not_read_project_with_id_less_than_1(
-        client, token, projects_with_teams, team_list
+    client, token, projects_with_teams, team_list
 ):
     invalid_id = 0
     response = client.get(
@@ -127,5 +127,42 @@ def test_not_read_project_with_id_less_than_1(
         headers={'Authorization': f'Bearer {token}'},
     )
 
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Project not found'}
+
+
+# >>>>>> TESTES DE ATUALIZAR PROJETOS
+
+
+# atualizar o nome do projeto com sucesso
+def test_update_project_name(
+    client, owner_token, projects_with_teams, team_list
+):
+    response = client.patch(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {owner_token}'},
+        json={'project_name': 'newProjectName'},
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data['project_name'] == 'newProjectName'
+    assert data['id'] == projects_with_teams.id
+    assert_project_has_teams(data, team_list)
+
+
+# atualizar um projeto cujo id não existe
+# com id +1
+def test_not_update_project_with_id_greater_than_length(
+    client, owner_token, projects_with_teams, team_list
+):
+    invalid_id = projects_with_teams.id + 1
+    response = client.patch(
+        f'/projects/{invalid_id}',
+        headers={'Authorization': f'Bearer {owner_token}'},
+        json={
+            'project_name': 'newProjectName',
+            'team_list': [team.team_name for team in team_list],
+        },
+    )
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Project not found'}
