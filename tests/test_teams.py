@@ -220,11 +220,11 @@ def test_not_update_team_name_with_already_existed_name(
     )
 
     assert response.status_code == HTTPStatus.CONFLICT
-    assert response.json() == {'detail': 'Team name alreaty exists'}
+    assert response.json() == {'detail': 'Team name already exists'}
 
 
 # atualizar time adicionando um novo usuário
-def test_update_team_user_list_adding_a_new_user(
+def test_update_team_list_adding_a_new_user(
     client, owner_token, team_with_users, users, other_user
 ):
     response = client.patch(
@@ -247,8 +247,8 @@ def test_update_team_user_list_adding_a_new_user(
     assert returned_usernames == expected_usernames
 
 
-# atualizar time removendo um novo usuário
-def test_update_team_user_list_removing_a_user(
+# atualizar time removendo um usuário
+def test_update_team_list_removing_a_user(
     client, owner_token, team_with_users, users
 ):
     # Remove o primeiro usuário da lista
@@ -303,7 +303,7 @@ def test_not_update_teams_without_users(client, owner_token, team_with_users):
 
 
 # teste para validar que nao pode alterar um time de outro usuário
-def test_cannot_update_team_of_another_user(
+def test_not_update_another_user_team(
     client, another_owner_token, team_with_users
 ):
     response = client.patch(

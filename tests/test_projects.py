@@ -166,3 +166,128 @@ def test_not_update_project_with_id_greater_than_length(
     )
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Project not found'}
+
+
+# atualizar um projeto cujo id não existe
+# com id = 0
+def test_not_update_project_with_id_greater_than_1(
+    client, owner_token, projects_with_teams, team_list
+):
+    invalid_id = 0
+    response = client.patch(
+        f'/projects/{invalid_id}',
+        headers={'Authorization': f'Bearer {owner_token}'},
+        json={
+            'project_name': 'newProjectName',
+            'team_list': [team.team_name for team in team_list],
+        },
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Project not found'}
+
+
+# atualizar o nome do projeto com um que ja existe
+def test_not_update_project_with_already_existed_name(
+    client, owner_token, projects_with_teams, another_project_with_same_name
+):
+    response = client.patch(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {owner_token}'},
+        json={'project_name': another_project_with_same_name.project_name},
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Project name already exists'}
+
+
+# atualizar projeto adicionando um novo time
+def test_update_project_list_adding_a_new_team(
+    client, owner_token, projects_with_teams, team_list, other_team_list
+):
+    response = client.patch(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {owner_token}'},
+        json={
+            'team_list': [team.team_name for team in team_list]
+            + [other_team.team_name for other_team in other_team_list],
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data['id'] == projects_with_teams.id
+    returned_team_names = {t['team_name'] for t in data['teams']}
+    expected_team_names = {team_list.team_name for team_list in team_list} | {
+        other_team_list.team_name for other_team_list in other_team_list
+    }
+    assert returned_team_names == expected_team_names
+
+
+# atualizar projeto removendo um time
+def test_update_project_list_removing_a_team(
+    client, owner_token, projects_with_teams, team_list
+):
+    # Remove o primeiro time da lista
+    removed_team = team_list[0]
+    remaining_teams = team_list[1:]
+
+    response = client.patch(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {owner_token}'},
+        json={'team_list': [team.team_name for team in remaining_teams]},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data['id'] == projects_with_teams.id
+    returned_team_names = {t['team_name'] for t in data['teams']}
+    expected_team_names = {
+        team_list.team_name for team_list in remaining_teams
+    }
+    assert returned_team_names == expected_team_names
+    assert removed_team.team_name not in returned_team_names
+
+
+# adicionar um time que nao existe
+def test_not_update_project_with_non_existent_team(
+    client, owner_token, projects_with_teams, team_list
+):
+    response = client.patch(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {owner_token}'},
+        json={
+            'team_list': [team.team_name for team in team_list]
+            + ['nonExistentTeam'],
+        },
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Teams not found'}
+
+
+# deixar a lista de times vazia
+def test_not_update_project_without_teams(
+    client, owner_token, projects_with_teams, team_list
+):
+    response = client.patch(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {owner_token}'},
+        json={'team_list': []},
+    )
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.json() == {'detail': 'Project must have at least one team'}
+
+
+# teste para validar que nao pode alterar um projeto de outro usuario
+def test_not_update_another_user_project(
+    client, another_owner_token, projects_with_teams
+):
+    response = client.patch(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {another_owner_token}'},
+        json={},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()['detail'].startswith(
+        'You are not allowed to update this project. '
+        'Only the team owner can perform this action.'
+    )
