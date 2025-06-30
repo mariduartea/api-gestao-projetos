@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 
 from sqlalchemy import Column, ForeignKey, Table, func
@@ -106,3 +106,21 @@ class Project:
     teams: Mapped[list[Team]] = relationship(
         'Team', secondary=projects_teams, back_populates='projects', init=False
     )
+
+
+@table_registry.mapped_as_dataclass
+class Sprint:
+    __tablename__ = 'sprints'
+    id: Mapped[int] = mapped_column(init=False, primary_key=True)
+    sprint_name: Mapped[str]
+    project_id: Mapped[int] = mapped_column(ForeignKey('projects.id'))
+    start_date: Mapped[date]
+    end_date: Mapped[date]
+    description: Mapped[str | None]
+    created_at: Mapped[datetime] = mapped_column(
+        init=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        init=False, server_default=func.now(), onupdate=func.now()
+    )
+    current_user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))

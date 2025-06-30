@@ -1,4 +1,5 @@
 from typing import List
+from datetime import date
 
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
@@ -105,3 +106,17 @@ class ProjectPublic(BaseModel):
 
 class FilterProject(BaseModel):
     project_name: str | None = None
+
+
+class SprintSchema(BaseModel):
+    sprint_name: str
+    project_name: str
+    start_date: date
+    end_date: date
+    description: str | None = None
+
+
+class SprintPublic(SprintSchema):
+    id: int
+    project_name: str
+    description: str
