@@ -9,6 +9,7 @@ from task_flow.database import get_session
 from task_flow.models import Project, Team, User
 from task_flow.schemas import (
     FilterProject,
+    Message,
     ProjectPublic,
     ProjectSchema,
     ProjectUpdateSchema,
@@ -166,3 +167,29 @@ def update_project(
     session.commit()
     session.refresh(project)
     return project
+
+@router.delete('/{team_id}', response_model=Message)
+def delete_project(
+        session: T_Session,
+        current_user: T_CurrentUser,
+        project_id: int
+):
+    project = session.scalar(select(Project).where(Project.id == project_id))
+
+    if not project:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Project not found'
+        )
+
+    if project.current_user_id != current_user.id:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='You are not allowed to delete this project. '
+                   'Only the team owner can perform this action.',
+        )
+
+    session.delete(project)
+    session.commit()
+
+    return {'message': 'Project deleted successfully'}
+
