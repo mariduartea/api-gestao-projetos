@@ -220,11 +220,11 @@ def test_not_update_team_name_with_already_existed_name(
     )
 
     assert response.status_code == HTTPStatus.CONFLICT
-    assert response.json() == {'detail': 'Team name alreaty exists'}
+    assert response.json() == {'detail': 'Team name already exists'}
 
 
 # atualizar time adicionando um novo usuário
-def test_update_team_user_list_adding_a_new_user(
+def test_update_team_list_adding_a_new_user(
     client, owner_token, team_with_users, users, other_user
 ):
     response = client.patch(
@@ -247,8 +247,8 @@ def test_update_team_user_list_adding_a_new_user(
     assert returned_usernames == expected_usernames
 
 
-# atualizar time removendo um novo usuário
-def test_update_team_user_list_removing_a_user(
+# atualizar time removendo um usuário
+def test_update_team_list_removing_a_user(
     client, owner_token, team_with_users, users
 ):
     # Remove o primeiro usuário da lista
@@ -303,7 +303,7 @@ def test_not_update_teams_without_users(client, owner_token, team_with_users):
 
 
 # teste para validar que nao pode alterar um time de outro usuário
-def test_cannot_update_team_of_another_user(
+def test_not_update_another_user_team(
     client, another_owner_token, team_with_users
 ):
     response = client.patch(
@@ -333,6 +333,7 @@ def test_delete_team_successfully(client, owner_token, team_with_users):
     assert response.json() == {'message': 'Team deleted successfully'}
 
 
+# não deletar com um id que não existe (id maior que a quantidade de times)
 def test_not_delete_teams_with_id_greater_than_length(
     client, token, team_with_users
 ):
@@ -360,7 +361,7 @@ def test_not_delete_teams_with_id_less_than_1(client, token, users):
 
 
 # teste para validar que nao pode deletar um time de outro usuário
-def test_cannot_delete_team_of_another_user(
+def test_not_delete_another_user_tean(
     client, another_owner_token, team_with_users
 ):
     response = client.delete(
