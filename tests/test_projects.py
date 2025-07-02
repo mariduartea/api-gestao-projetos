@@ -291,3 +291,60 @@ def test_not_update_another_user_project(
         'You are not allowed to update this project. '
         'Only the team owner can perform this action.'
     )
+
+
+# >>>>>> TESTES DE DELETAR PROJETOS
+
+
+# deletar projeto com sucesso
+def test_delete_project_successfully(client, owner_token, projects_with_teams):
+    response = client.delete(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {owner_token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {'message': 'Project deleted successfully'}
+
+
+# não deletar com um id que não existe (id maior que a quantidade de projetos)
+def test_not_delete_project_with_id_greater_than_length(
+    client, token, projects_with_teams
+):
+    invalid_id = projects_with_teams.id + 1
+    response = client.delete(
+        f'/projects/{invalid_id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Project not found'}
+
+
+# não deletar com um id que não existe (id = 0)
+def test_not_delete_project_with_id_less_than_1(
+        client, token, projects_with_teams
+):
+    invalid_id = 0
+    response = client.delete(
+        f'/projects/{invalid_id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Project not found'}
+
+
+def test_not_delete_another_user_project(
+        client, another_owner_token, projects_with_teams
+):
+    response = client.delete(
+        f'/projects/{projects_with_teams.id}',
+        headers={'Authorization': f'Bearer {another_owner_token}'},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()['detail'].startswith(
+        'You are not allowed to delete this project. '
+        'Only the project owner can perform this action.'
+    )

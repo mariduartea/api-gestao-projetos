@@ -168,11 +168,10 @@ def update_project(
     session.refresh(project)
     return project
 
-@router.delete('/{team_id}', response_model=Message)
+
+@router.delete('/{project_id}', response_model=Message)
 def delete_project(
-        session: T_Session,
-        current_user: T_CurrentUser,
-        project_id: int
+    session: T_Session, current_user: T_CurrentUser, project_id: int
 ):
     project = session.scalar(select(Project).where(Project.id == project_id))
 
@@ -185,11 +184,10 @@ def delete_project(
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
             detail='You are not allowed to delete this project. '
-                   'Only the team owner can perform this action.',
+            'Only the project owner can perform this action.',
         )
 
     session.delete(project)
     session.commit()
 
     return {'message': 'Project deleted successfully'}
-

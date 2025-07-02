@@ -333,6 +333,7 @@ def test_delete_team_successfully(client, owner_token, team_with_users):
     assert response.json() == {'message': 'Team deleted successfully'}
 
 
+# não deletar com um id que não existe (id maior que a quantidade de times)
 def test_not_delete_teams_with_id_greater_than_length(
     client, token, team_with_users
 ):
@@ -360,7 +361,7 @@ def test_not_delete_teams_with_id_less_than_1(client, token, users):
 
 
 # teste para validar que nao pode deletar um time de outro usuário
-def test_cannot_delete_team_of_another_user(
+def test_not_delete_another_user_tean(
     client, another_owner_token, team_with_users
 ):
     response = client.delete(
