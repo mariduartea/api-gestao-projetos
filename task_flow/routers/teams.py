@@ -128,7 +128,7 @@ def update_team(
         if existing_team:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail='Team name alreaty exists',
+                detail='Team name already exists',
             )
         team.team_name = team_update.team_name
 

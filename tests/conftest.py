@@ -221,6 +221,23 @@ def team_list(session, users):
 
 
 @pytest.fixture
+def other_team_list(session, users):
+    teams = []
+    for i in range(3):
+        team = TeamFactory(
+            team_name=f'other_team{i}',
+            current_user_id=users[(i + 1) % len(users)].id,
+        )
+        team.users = [users[(i + 1) % len(users)]]
+        session.add(team)
+        teams.append(team)
+    session.commit()
+    for team in teams:
+        session.refresh(team)
+    return teams
+
+
+@pytest.fixture
 def team_dict_list(team_list):
     return [TeamSchema.from_orm(team).dict() for team in team_list]
 
@@ -239,6 +256,18 @@ def another_team_with_same_name(session, users):
 def projects_with_teams(session, team_list, users):
     project = ProjectFactory(current_user_id=users[0].id)
     project.teams = team_list  # Relacionamento muitos-para-muitos
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+    return project
+
+
+@pytest.fixture
+def another_project_with_same_name(session, team_list, users):
+    project = ProjectFactory(
+        project_name='nome_duplicado', current_user_id=users[0].id
+    )
+    project.teams = team_list
     session.add(project)
     session.commit()
     session.refresh(project)

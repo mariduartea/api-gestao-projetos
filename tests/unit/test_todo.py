@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from task_flow.models import TodoState
-from tests.unit.conftest import TodoFactory
+from tests.conftest import TodoFactory
 
 
 def test_create_todo(client, token):

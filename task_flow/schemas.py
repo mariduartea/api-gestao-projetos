@@ -105,3 +105,8 @@ class ProjectPublic(BaseModel):
 
 class FilterProject(BaseModel):
     project_name: str | None = None
+
+
+class ProjectUpdateSchema(BaseModel):
+    project_name: str | None = None
+    team_list: list[str] | None = None
