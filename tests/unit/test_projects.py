@@ -119,7 +119,7 @@ def test_not_read_project_with_id_greater_than_length(
 
 
 def test_not_read_project_with_id_less_than_1(
-        client, token, projects_with_teams, team_list
+    client, token, projects_with_teams, team_list
 ):
     invalid_id = 0
     response = client.get(
