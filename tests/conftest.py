@@ -14,8 +14,6 @@ from task_flow.database import get_session
 from task_flow.models import (
     Project,
     Team,
-    Todo,
-    TodoState,
     User,
     table_registry,
 )
@@ -30,16 +28,6 @@ class UserFactory(factory.Factory):
     username = factory.Sequence(lambda n: f'user{n}')
     email = factory.LazyAttribute(lambda obj: f'{obj.username}@test.com')
     password = factory.LazyAttribute(lambda obj: f'{obj.username}+senha')
-
-
-class TodoFactory(factory.Factory):
-    class Meta:
-        model = Todo
-
-    title = factory.Faker('text')
-    description = factory.Faker('text')
-    state = factory.fuzzy.FuzzyChoice(TodoState)
-    user_id = 1
 
 
 class TeamFactory(factory.Factory):
