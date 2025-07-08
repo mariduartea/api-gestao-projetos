@@ -323,7 +323,7 @@ def test_not_delete_project_with_id_greater_than_length(
 
 # não deletar com um id que não existe (id = 0)
 def test_not_delete_project_with_id_less_than_1(
-        client, token, projects_with_teams
+    client, token, projects_with_teams
 ):
     invalid_id = 0
     response = client.delete(
@@ -336,7 +336,7 @@ def test_not_delete_project_with_id_less_than_1(
 
 
 def test_not_delete_another_user_project(
-        client, another_owner_token, projects_with_teams
+    client, another_owner_token, projects_with_teams
 ):
     response = client.delete(
         f'/projects/{projects_with_teams.id}',
