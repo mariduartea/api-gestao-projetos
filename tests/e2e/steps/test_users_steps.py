@@ -1,10 +1,13 @@
 from http import HTTPStatus
 
 import pytest
-from conftest import UserFactory
-from pytest_bdd import given, parsers, scenarios, then, when
-
-from task_flow.security import get_password_hash
+from pytest_bdd import given, scenarios, then, when
+from utils.helpers import (
+    authentication,
+    create_random_project,
+    create_random_team,
+    create_random_user,
+)
 
 scenarios('../feature/users.feature')
 
@@ -14,57 +17,23 @@ def context():
     return {}
 
 
-@given(
-    parsers.parse(
-        'a user called "{username}" '
-        'with email "{email}" and password "{password}"'
-    )
-)
-def create_user(session, context, username, email, password):
-    hashed = get_password_hash(password)
-    user = UserFactory(username=username, email=email, password=hashed)
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-
-    context['user_id'] = user.id
-    context['username'] = username
-    context['email'] = email
-    context['password'] = password
+# Scenario: Update a user and verify that the change appears in the team list
+@given('a random user is created')
+def step_create_user(session, context):
+    data = create_random_user(session, context)
+    context.update(data)
 
 
-@given(
-    parsers.parse(
-        'a team called "{team_name}" is created with user "{username}"'
-    )
-)
-def create_team(client, context, team_name, username):
-    # Autentica o usuário
-    res = client.post(
-        '/auth/token',
-        data={'username': context['email'], 'password': context['password']},
-    )
-    assert res.status_code == HTTPStatus.OK
-    token = res.json()['access_token']
-    context['headers'] = {'Authorization': f'Bearer {token}'}
-    context['team_name'] = team_name
-
-    # Cria o time via API
-    res = client.post(
-        '/teams/',
-        json={'team_name': team_name, 'user_list': [username]},
-        headers=context['headers'],
-    )
-    assert res.status_code == HTTPStatus.CREATED
+@given('a random team is created with that user')
+def step_create_team(client, context):
+    authentication(client, context)
+    create_random_team(client, context)
 
 
-@when(
-    parsers.parse(
-        'the user "{old_username}" changes their name to "{new_username}"'
-    )
-)
-def update_user(client, context, old_username, new_username):
-    res = client.put(
+@when('the user changes their name')
+def update_user_name(client, context):
+    new_username = f'super{context["username"]}'
+    response = client.put(
         f'/users/{context["user_id"]}',
         json={
             'username': new_username,
@@ -73,26 +42,154 @@ def update_user(client, context, old_username, new_username):
         },
         headers=context['headers'],
     )
-    assert res.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, (
+        'Error while update user name'
+    )
     context['username'] = new_username
 
 
-@then(
-    parsers.parse(
-        'the team "{team_name}" must list "{expected_username}" as a member'
-    )
-)
-def verify_member_of_the_team(client, context, team_name, expected_username):
-    res = client.get('/teams/', headers=context['headers'])
-    assert res.status_code == HTTPStatus.OK
-    teams = res.json()
+@then('the team must list the new name as a member')
+def verify_member_of_the_team(client, context):
+    response = client.get('/teams/', headers=context['headers'])
+    assert response.status_code == HTTPStatus.OK
+    teams = response.json()
 
+    team_name = context['team_name']
     # Encontra o time pelo nome
     time = next((t for t in teams if t['team_name'] == team_name), None)
-    assert time is not None, f"Team '{team_name}' does not exist."
+    assert time is not None, f"Team '{context['team_name']}' does not exist."
 
     membros = time['users']
     usernames = [m['username'] for m in membros]
-    assert expected_username in usernames, (
-        f"'{expected_username}' it's not one of the members: {usernames}"
+    assert context['username'] in usernames, (
+        f"'{context['username']}' it's not one of the members: {usernames}"
+    )
+
+
+# Scenario: Updt a user and verify that the change appears in the project list
+@given('a random project is created with that team')
+def step_create_project(client, context):
+    create_random_project(client, context)
+
+
+@when('the user changes their name')
+def update_username(client, context):
+    new_username = f'super{context["username"]}'
+
+    response = client.put(
+        f'/users/{context["user_id"]}',
+        headers=context['headers'],
+        json={
+            'username': new_username,
+            'email': context['email'],
+            'password': context['password'],
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    context['username'] = new_username
+
+
+@then('the project must list the new name as a member')
+def verify_member_of_the_project(client, context):
+    response = client.get('/projects/', headers=context['headers'])
+    assert response.status_code == HTTPStatus.OK
+
+    projects = response.json()
+
+    # Encontra o projeto pelo nome
+    project = next(
+        (t for t in projects if t['project_name'] == context['project_name']),
+        None,
+    )
+    assert project is not None, (
+        f"Project '{context['project_name']}' does not exist."
+    )
+
+    print('🔎 project response:', project)
+
+    usernames = []
+    for team in project['teams']:
+        for user in team['users']:
+            usernames.append(user['username'])
+
+    assert context['username'] in usernames, (
+        f"'{context['username']}' it's not one of the members: {usernames}"
+    )
+
+
+# Scenario: Del a user and ver that they no long appear as a member of a team
+@given('another random user is created')
+def create_another_user(session, context):
+    another_context = {}
+    another_user = create_random_user(session, another_context)
+    context['second_user'] = another_user
+
+
+@given('the team list is updated with the new user')
+def update_the_team_list(client, context):
+    # autentica com o usuário que criou o time
+    authentication(client, context)
+
+    # busca os dados do time
+    response = client.get("/teams/", headers=context['headers'])
+    assert response.status_code == HTTPStatus.OK
+    teams = response.json()
+    team = next((t for t in teams if t['team_name'] == context['team_name']), None)
+    assert team is not None
+
+    team_id = team['id']
+    context['team_id'] = team_id
+
+    # adiciona o novo usuário à lista de usuários
+    user_list = [user['username'] for user in team['users']]
+    user_list.append(context['second_user']['username'])
+
+    response = client.patch(
+        f"/teams/{context['team_id']}",
+        json={
+            "team_name": context['team_name'],
+            "user_list": user_list
+        },
+        headers=context['headers'],
+    )
+    assert response.status_code == HTTPStatus.OK
+
+
+@when('the other user is deleted')
+def delete_user_from_system(client, context):
+    # autenticar com o usuário criado
+    second_user = context['second_user']
+
+    response = client.post(
+        '/auth/token',
+        data={'username': second_user['email'],
+              'password': second_user['password']},
+    )
+    assert response.status_code == HTTPStatus.OK
+    token = response.json()['access_token']
+    headers = {'Authorization': f'Bearer {token}'}
+
+    response = client.delete(
+        f'/users/{second_user['user_id']}', headers=headers
+    )
+    assert response.status_code == HTTPStatus.OK
+
+
+@then('the team must not list the deleted user as a member')
+def verify_deleted_member_of_the_team(client, context):
+    # reautenticar com o usuario que criou o time
+    authentication(client, context)
+
+    response = client.get('/teams/', headers=context['headers'])
+    assert response.status_code == HTTPStatus.OK
+
+    team = next((t for t in response.json() if t['team_name'] == context['team_name']), None)
+    assert team is not None
+
+    usernames = [m['username'] for m in team['users']]
+
+    assert context['second_user']['username'] not in usernames, (
+        f"User '{context['second_user']}' was not deleted "
+        f'from team members: {usernames}'
     )

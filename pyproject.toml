@@ -33,6 +33,7 @@ factory-boy = "^3.3.3"
 freezegun = "^1.5.1"
 testcontainers = "^4.10.0"
 alembic = "^1.16.1"
+faker = "^37.4.0"
 
 
 [tool.pytest.ini_options]
