@@ -1,0 +1,18 @@
+{
+  "cucumberautocomplete.steps": [
+    "tests/features/steps/**/*.py"
+  ],
+  "cucumberautocomplete.syncfeatures": "tests/features/**/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": true,
+  "cucumberautocomplete.smartSnippets": true,
+  "cucumberautocomplete.snippetsKeywords": [
+    "Given",
+    "When",
+    "Then",
+    "And",
+    "But"
+  ],
+  "editor.quickSuggestions": {
+    "strings": true
+  }
+}
