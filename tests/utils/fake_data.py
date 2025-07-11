@@ -17,6 +17,7 @@ GIRL_NAMES = [
 
 used_names = set()
 
+
 def fake_user_data():
     # Garante que o nome escolhido não foi usado ainda
     available_names = [n for n in GIRL_NAMES if n.lower() not in used_names]
