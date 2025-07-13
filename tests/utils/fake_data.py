@@ -26,9 +26,20 @@ TEAM_NAMES = [
     'Meninos Desordeiros'
 ]
 
+used_names = set()
+
 
 def fake_user_data():
-    name = random.choice(GIRL_NAMES)
+    # Garante que o nome escolhido não foi usado ainda
+    available_names = [n for n in GIRL_NAMES if n.lower() not in used_names]
+
+    if not available_names:
+        # Se acabaram os nomes, gera um nome faker único
+        name = faker.unique.user_name()
+    else:
+        name = random.choice(available_names)
+        used_names.add(name.lower())
+
     return {
         'username': name.lower(),
         'email': f'{name.lower()}@cidadeville.com',

@@ -55,12 +55,14 @@ def verify_updated_team_in_project(client, context):
     )
     assert project is not None, f"Project '{project_name}' does not exist."
     
-    # Atualiza o context com o novo nome do team
-    updated_team_name = f'{context["team_name"]}'
-    context['team_name'] = updated_team_name
+    # Busca os teams do projeto
+    all_teams_in_projects = project.get('teams', [])
     
-    all_teams = project.get('team_list', [])
-    team_names = [t['team_name'] for t in all_teams]
+    # Extrai os nomes dos teams (assumindo que são objetos com team_name)
+    team_names = [team['team_name'] for team in all_teams_in_projects]
+    
+    updated_team_name = context['team_name']  # Já foi atualizado no step anterior
+    
     assert updated_team_name in team_names, (
         f"Updated team '{updated_team_name}' not found in project '{project_name}'. Found: {team_names}"
     )
