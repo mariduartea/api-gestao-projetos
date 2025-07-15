@@ -16,11 +16,17 @@ GIRL_NAMES = [
     'JomoMomo',
 ]
 
+
 def unique_name():
     available_names = [name for name in GIRL_NAMES if name not in used_names]
-    name = random.choice(available_names) if available_names else faker.first_name()
+    name = (
+        random.choice(available_names)
+        if available_names
+        else faker.first_name()
+    )
     used_names.add(name)
     return name.lower()
+
 
 def fake_user_data():
     name = unique_name()
@@ -29,6 +35,7 @@ def fake_user_data():
         'email': f'{name}@cidadeville.com',
         'password': faker.password(length=8),
     }
+
 
 def fake_team_name():
     return (

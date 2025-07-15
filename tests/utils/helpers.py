@@ -19,19 +19,21 @@ def create_random_user(session, context):
     session.refresh(user)
 
     context.update({
-        "user_id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "password": data["password"],
+        'user_id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'password': data['password'],
     })
     return context
 
-def update_user(client, user_id, username, email, password, headers):
+
+def update_user(client, user_id, user_data:dict, headers):
     return client.put(
         f'/users/{user_id}',
-        json={'username': username, 'email': email, 'password': password},
+        json=user_data,
         headers=headers,
     )
+
 
 def add_user_to_team(client, team_id, team_name, users, headers):
     return client.patch(
@@ -39,6 +41,7 @@ def add_user_to_team(client, team_id, team_name, users, headers):
         json={'team_name': team_name, 'user_list': users},
         headers=headers,
     )
+
 
 def authentication(client, context):
     # Autentica o usuário
@@ -50,6 +53,7 @@ def authentication(client, context):
     token = response.json()['access_token']
     context['headers'] = {'Authorization': f'Bearer {token}'}
 
+
 def authenticate_user(client, email, password):
     # Autentica o usuário
     response = client.post(
@@ -59,6 +63,7 @@ def authenticate_user(client, email, password):
     assert response.status_code == HTTPStatus.OK
     token = response.json()['access_token']
     return {'Authorization': f'Bearer {token}'}
+
 
 def create_random_team(client, context):
     team_name = fake_team_name()

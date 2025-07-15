@@ -3,13 +3,13 @@ from http import HTTPStatus
 import pytest
 from pytest_bdd import given, scenarios, then, when
 from utils.helpers import (
+    add_user_to_team,
+    authenticate_user,
     authentication,
     create_random_project,
     create_random_team,
     create_random_user,
     update_user,
-    add_user_to_team,
-    authenticate_user
 )
 
 scenarios('../feature/users.feature')
@@ -19,30 +19,35 @@ scenarios('../feature/users.feature')
 def context():
     return {}
 
+
 # CT001
 @given('a random user is created')
 def random_user_is_created(session, context):
     create_random_user(session, context)
 
+
 @when('the user changes their name and email')
 def user_changes_name_and_email(client, context):
     authentication(client, context)
-    new_username = f"super{context['username']}"
-    new_email = f"{new_username}@cidadeville.com"
+    new_username = f'super{context["username"]}'
+    new_email = f'{new_username}@cidadeville.com'
 
     response = update_user(
         client=client,
         user_id=context['user_id'],
-        username=new_username,
-        email=new_email,
-        password=context['password'],
-        headers=context['headers']
+        user_data={
+            'username': new_username,
+            'email': new_email,
+            'password': context['password'],
+        },
+        headers=context['headers'],
     )
     assert response.status_code == HTTPStatus.OK, (
         'Error while update username or email'
     )
     context['username'] = new_username
     context['email'] = new_email
+
 
 @then('the user list must reflect the updated user')
 def verify_user_list_updates(client, context):
@@ -51,15 +56,17 @@ def verify_user_list_updates(client, context):
 
     users = response.json()['users']
     user = next(
-    (u 
-        for u in users 
-        if u['username'] == context['username'] 
-        and u['email'] == context['email']
-    ),
-    None
+        (
+            u
+            for u in users
+            if u['username'] == context['username']
+            and u['email'] == context['email']
+        ),
+        None,
     )
 
-    assert user is not None, "Updated user not found in user list"
+    assert user is not None, 'Updated user not found in user list'
+
 
 # CT002
 @given('a random team is created with that user')
@@ -74,14 +81,14 @@ def user_changes_name(client, context):
     response = update_user(
         client=client,
         user_id=context['user_id'],
-        username=new_username,
-        email=context['email'],
-        password=context['password'],
-        headers=context['headers']
+        user_data={
+            'username': new_username,
+            'email': context['email'],
+            'password': context['password'],
+        },
+        headers=context['headers'],
     )
-    assert response.status_code == HTTPStatus.OK, (
-        'Error while update username'
-    )
+    assert response.status_code == HTTPStatus.OK, 'Error while update username'
     context['username'] = new_username
 
 
@@ -107,6 +114,7 @@ def verify_member_of_the_team(client, context):
 @given('a random project is created with that team')
 def random_project_is_created(client, context):
     create_random_project(client, context)
+
 
 @then('the project must list the new name as a member')
 def verify_member_of_the_project(client, context):
@@ -167,16 +175,19 @@ def update_the_team_list(client, context):
         context['team_id'],
         context['team_name'],
         user_list,
-        context['headers']
+        context['headers'],
     )
     assert response.status_code == HTTPStatus.OK, 'user not found'
+
 
 @when('the other user is deleted')
 def delete_user_from_system(client, context):
     # autenticar com o usuário criado
     second_user = context['another_user']
 
-    headers = authenticate_user(client, second_user['email'], second_user['password'])
+    headers = authenticate_user(
+        client, second_user['email'], second_user['password']
+    )
 
     response = client.delete(
         f'/users/{second_user["user_id"]}', headers=headers
@@ -241,7 +252,7 @@ def new_update_for_team_list(client, context):
         context['team_id'],
         context['team_name'],
         user_list,
-        context['headers']
+        context['headers'],
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -257,7 +268,9 @@ def delete_third_user_from_system(client, context):
     # autenticar com o usuário criado
     third_user = context['third_user']
 
-    headers = authenticate_user(client, third_user['email'], third_user['password'])
+    headers = authenticate_user(
+        client, third_user['email'], third_user['password']
+    )
 
     # delete o usuário
     response = client.delete(
@@ -308,9 +321,7 @@ def deleting_user(client, context):
     user = context['user_to_be_deleted']
     headers = authenticate_user(client, user['email'], user['password'])
 
-    response = client.delete(
-        f'/users/{user['user_id']}', headers=headers
-    )
+    response = client.delete(f'/users/{user["user_id"]}', headers=headers)
     assert response.status_code == HTTPStatus.OK
 
     context['deleted_user_id'] = user['user_id']
