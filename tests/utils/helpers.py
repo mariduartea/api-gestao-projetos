@@ -45,7 +45,7 @@ def create_random_team_via_api(client, context, num_users=2):
     team_name = fake_team_name()
     context['team_name'] = team_name
 
-    # Cria o time via api
+    # Cria o time via api 
     response = client.post(
         '/teams/',
         json={'team_name': team_name, 'user_list': [context['username']]},
@@ -67,8 +67,9 @@ def create_random_team_direct(session, context, num_users=2):
     team_name = fake_team_name()
     team = TeamFactory(
         team_name=team_name,
-        users=users
+        current_user_id=users[0].id 
     )
+    team.users.extend(users)
     session.add(team)
     session.commit()
 

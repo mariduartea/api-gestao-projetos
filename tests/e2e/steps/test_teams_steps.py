@@ -6,6 +6,7 @@ from utils.helpers import (
     authentication,
     create_random_user_direct,
     create_random_team_via_api,
+    create_random_team_direct,
     create_random_project_via_api,
 )
 
@@ -15,7 +16,7 @@ scenarios('../features/teams.feature')
 def context():
     return {}
 
-# Scenario: Update a team and verify that the changes appear in the project list
+# Steps em comum de todos os cenários
 @given("the API has a registered team")
 def verify_registered_team(session, client, context):
     create_random_user_direct(session, context)
@@ -27,6 +28,7 @@ def verify_registered_team(session, client, context):
 def verify_associated_team_with_project(client, context):
     create_random_project_via_api(client, context)
 
+# Scenario: Update a team and verify that the changes appear in the project list
 @when("this team is edited")
 def edit_team(client, context):
     new_team_name = f'Updated {context["team_name"]}'
@@ -65,4 +67,68 @@ def verify_updated_team_in_project(client, context):
     
     assert updated_team_name in team_names, (
         f"Updated team '{updated_team_name}' not found in project '{project_name}'. Found: {team_names}"
+    )
+
+# Scenario: Deleting a team and verify if it doesn't exist in a certain project
+@given("another random team is created")
+def create_another_team(session, context):
+    another_team = create_random_team_direct(session, context)
+    context['another_team'] = another_team
+
+@given("the project list is updated with the new team")
+def create_project(client, context):
+    authentication(client, context)
+    response = client.get('/projects/', headers = context['headers'])
+    assert response.status_code == HTTPStatus.OK
+
+    projects = response.json()
+    project = next(
+        (p for p in projects if p['project_name'] == context['project_name']) , None
+    )
+    assert project is not None
+    project_id = project['id']
+    context['project_id'] = project_id
+
+    # adicionar novo time à lista de projetos
+    team_list = [team['team_name'] for team in project['teams']]
+    team_list.append(context['another_team']['team_name'])
+
+    response = client.patch(
+        f'/projects/{context["project_id"]}',
+        json={'project_name': context['project_name'], 'team_list': team_list},
+        headers = context['headers']
+    )
+
+    # FAZ NOVO GET para ver o efeito real
+    response = client.get('/projects/', headers=context['headers'])
+    assert response.status_code == HTTPStatus.OK
+
+@when("this team is deleted")
+def delete_team(client, context):
+    response = client.delete(
+        f'/teams/{context["team_id"]}',
+        headers=context['headers']
+    )
+
+    assert response.status_code == HTTPStatus.OK, (
+        f'Error while deleting team: {response.json()}'
+    )
+
+@then("the deleted team have to disappear in project list")
+def verify_no_deleted_team_in_project(client, context):
+    response = client.get('/projects/', headers=context['headers'])
+    assert response.status_code == HTTPStatus.OK, (
+        f'Error while fetching projects: {response.json()}'
+    )
+    projects = response.json()
+    project_name = context['project_name']
+
+    # Com o next() podemos pegar o primeiro projeto que tem o nome correspondente
+    project = next(
+        (p for p in projects if p['project_name'] == project_name), None
+    )
+    assert project is not None, f"Project '{project_name}' does not exist."
+    teams_names = [t['team_name'] for t in project['teams']]
+    assert context['another_team']['team_name'] not in teams_names, (
+        f"Team '{context['another_team']['team_name']}' was not deleted from project: {teams_names}"
     )
