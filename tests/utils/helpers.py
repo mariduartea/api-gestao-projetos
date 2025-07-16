@@ -27,7 +27,7 @@ def create_random_user(session, context):
     return context
 
 
-def update_user(client, user_id, user_data:dict, headers):
+def update_user(client, user_id, user_data: dict, headers):
     return client.put(
         f'/users/{user_id}',
         json=user_data,
