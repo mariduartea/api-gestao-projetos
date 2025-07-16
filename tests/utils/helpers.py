@@ -18,12 +18,29 @@ def create_random_user(session, context):
     session.commit()
     session.refresh(user)
 
-    context['user_id'] = user.id
-    context['username'] = data['username']
-    context['email'] = data['email']
-    context['password'] = data['password']
-    print('User created:', data['username'])
+    context.update({
+        'user_id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'password': data['password'],
+    })
     return context
+
+
+def update_user(client, user_id, user_data: dict, headers):
+    return client.put(
+        f'/users/{user_id}',
+        json=user_data,
+        headers=headers,
+    )
+
+
+def add_user_to_team(client, team_id, team_name, users, headers):
+    return client.patch(
+        f'/teams/{team_id}',
+        json={'team_name': team_name, 'user_list': users},
+        headers=headers,
+    )
 
 
 def authentication(client, context):
@@ -35,6 +52,17 @@ def authentication(client, context):
     assert response.status_code == HTTPStatus.OK
     token = response.json()['access_token']
     context['headers'] = {'Authorization': f'Bearer {token}'}
+
+
+def authenticate_user(client, email, password):
+    # Autentica o usuário
+    response = client.post(
+        '/auth/token',
+        data={'username': email, 'password': password},
+    )
+    assert response.status_code == HTTPStatus.OK
+    token = response.json()['access_token']
+    return {'Authorization': f'Bearer {token}'}
 
 
 def create_random_team(client, context):
@@ -50,7 +78,6 @@ def create_random_team(client, context):
     assert response.status_code == HTTPStatus.CREATED, (
         f'Error while creating team: {response.json()}'
     )
-    print('Team created:', team_name)
 
 
 def create_random_project(client, context):

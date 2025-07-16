@@ -1,14 +1,21 @@
 Feature: Gerenciamento de usuários
 
 # Scenario: Fluxo completo e feliz com usuário
-# Scenario: Atualizar um usuário e verificar a alteração na lista de usuários  
 
+#CT 001
+Scenario: Update a user and verify that the change appears in the user list
+    Given a random user is created
+    When the user changes their name and email
+    Then the user list must reflect the updated user
+
+#CT 002
 Scenario: Update a user and verify that the change appears in the team list
     Given a random user is created
     And a random team is created with that user
     When the user changes their name
     Then the team must list the new name as a member
 
+#CT 003
 Scenario: Update a user and verify that the change appears in the project list
     Given a random user is created
     And a random team is created with that user
@@ -16,6 +23,7 @@ Scenario: Update a user and verify that the change appears in the project list
     When the user changes their name
     Then the project must list the new name as a member
 
+#CT 004
 Scenario: Delete a user and verify that they no longer appear as a member of a team
     Given a random user is created
     And a random team is created with that user
@@ -24,6 +32,7 @@ Scenario: Delete a user and verify that they no longer appear as a member of a t
     When the other user is deleted
     Then the team must not list the deleted user as a member
 
+#CT 005
 Scenario: Delete a user and verify that they no longer appear as a member of a project
     Given a random user is created
     And a random team is created with that user
@@ -33,6 +42,7 @@ Scenario: Delete a user and verify that they no longer appear as a member of a p
     When the third user is deleted
     Then the project must not list the deleted user as a member
 
+#CT 006
 Scenario: Delete a user and attempt to create a team with that user (should fail)
     Given a random user is created
     And a new user is created
