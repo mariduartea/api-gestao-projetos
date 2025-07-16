@@ -132,3 +132,44 @@ def verify_no_deleted_team_in_project(client, context):
     assert context['another_team']['team_name'] not in teams_names, (
         f"Team '{context['another_team']['team_name']}' was not deleted from project: {teams_names}"
     )
+
+# Scenario: Successful end-to-end flow with a team
+@given("Successful end-to-end flow with a team")
+def create_user():
+    return 0
+
+@when("the user creates a new team")
+def create_team():
+    return 0
+
+@then("the team appears in the team list")
+def get_teams_list():
+    return 0
+
+@when("the team can be retrieved by its ID")
+def get_team_by_id():
+    return 0
+
+@when("the user updates the team data")
+def update_team():
+    return 0
+
+@then("the updated team appears in the team list")
+def get_updated_team_in_teams_list():
+    return 0
+
+@when("the updated team can be retrieved by its ID")
+def get_updated_team_by_id():
+    return 0
+
+@when("the user deletes the team")
+def delete_team():
+    return 0
+
+@then("the team no longer appears in the team list")
+def deleted_team_not_in_teams_list():
+    return 0
+
+@then("the team cannot be retrieved by its ID")
+def deleted_team_not_found_by_id():
+    return 0
