@@ -3,6 +3,7 @@ import random
 from faker import Faker
 
 faker = Faker('en_US')
+used_names = set()
 
 # Temas personalizados
 GIRL_NAMES = [
@@ -26,23 +27,23 @@ TEAM_NAMES = [
     'Meninos Desordeiros'
 ]
 
-used_names = set()
+
+def unique_name():
+    available_names = [name for name in GIRL_NAMES if name not in used_names]
+    name = (
+        random.choice(available_names)
+        if available_names
+        else faker.first_name()
+    )
+    used_names.add(name)
+    return name.lower()
 
 
 def fake_user_data():
-    # Garante que o nome escolhido não foi usado ainda
-    available_names = [n for n in GIRL_NAMES if n.lower() not in used_names]
-
-    if not available_names:
-        # Se acabaram os nomes, gera um nome faker único
-        name = faker.unique.user_name()
-    else:
-        name = random.choice(available_names)
-        used_names.add(name.lower())
-
+    name = unique_name()
     return {
-        'username': name.lower(),
-        'email': f'{name.lower()}@cidadeville.com',
+        'username': name,
+        'email': f'{name}@cidadeville.com',
         'password': faker.password(length=8),
     }
 

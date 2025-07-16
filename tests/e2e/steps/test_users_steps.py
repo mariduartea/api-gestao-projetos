@@ -3,10 +3,13 @@ from http import HTTPStatus
 import pytest
 from pytest_bdd import given, scenarios, then, when
 from utils.helpers import (
+    add_user_to_team,
+    authenticate_user,
     authentication,
     create_random_project_via_api,
     create_random_team_via_api,
     create_random_user_direct,
+    update_user,
 )
 
 scenarios('../features/users.feature')
@@ -17,34 +20,80 @@ def context():
     return {}
 
 
-# Scenario: Update a user and verify that the change appears in the team list
+# CT001
 @given('a random user is created')
 def step_create_user(session, context):
     data = create_random_user_direct(session, context)
     context.update(data)
 
 
+def random_user_is_created(session, context):
+    create_random_user(session, context)
+
+
+@when('the user changes their name and email')
+def user_changes_name_and_email(client, context):
+    authentication(client, context)
+    new_username = f'super{context["username"]}'
+    new_email = f'{new_username}@cidadeville.com'
+
+    response = update_user(
+        client=client,
+        user_id=context['user_id'],
+        user_data={
+            'username': new_username,
+            'email': new_email,
+            'password': context['password'],
+        },
+        headers=context['headers'],
+    )
+    assert response.status_code == HTTPStatus.OK, (
+        'Error while update username or email'
+    )
+    context['username'] = new_username
+    context['email'] = new_email
+
+
+@then('the user list must reflect the updated user')
+def verify_user_list_updates(client, context):
+    response = client.get('/users/', headers=context['headers'])
+    assert response.status_code == HTTPStatus.OK
+
+    users = response.json()['users']
+    user = next(
+        (
+            u
+            for u in users
+            if u['username'] == context['username']
+            and u['email'] == context['email']
+        ),
+        None,
+    )
+
+    assert user is not None, 'Updated user not found in user list'
+
+
+# CT002
 @given('a random team is created with that user')
-def step_create_team(client, context):
+def random_team_is_created(client, context):
     authentication(client, context)
     create_random_team_via_api(client, context)
 
 
 @when('the user changes their name')
-def update_user_name(client, context):
+def user_changes_name(client, context):
     new_username = f'super{context["username"]}'
-    response = client.put(
-        f'/users/{context["user_id"]}',
-        json={
+    response = update_user(
+        client=client,
+        user_id=context['user_id'],
+        user_data={
             'username': new_username,
             'email': context['email'],
             'password': context['password'],
         },
         headers=context['headers'],
     )
-    assert response.status_code == HTTPStatus.OK, (
-        'Error while update user name'
-    )
+    assert response.status_code == HTTPStatus.OK, 'Error while update username'
     context['username'] = new_username
 
 
@@ -52,42 +101,24 @@ def update_user_name(client, context):
 def verify_member_of_the_team(client, context):
     response = client.get('/teams/', headers=context['headers'])
     assert response.status_code == HTTPStatus.OK
-    teams = response.json()
 
+    teams = response.json()
     team_name = context['team_name']
     # Encontra o time pelo nome
-    time = next((t for t in teams if t['team_name'] == team_name), None)
-    assert time is not None, f"Team '{context['team_name']}' does not exist."
+    team = next((t for t in teams if t['team_name'] == team_name), None)
+    assert team is not None, f"Team '{context['team_name']}' does not exist."
 
-    membros = time['users']
+    membros = team['users']
     usernames = [m['username'] for m in membros]
     assert context['username'] in usernames, (
         f"'{context['username']}' it's not one of the members: {usernames}"
     )
 
 
-# Scenario: Updt a user and verify that the change appears in the project list
+# CT003
 @given('a random project is created with that team')
 def step_create_project(client, context):
     create_random_project_via_api(client, context)
-
-
-@when('the user changes their name')
-def update_username(client, context):
-    new_username = f'super{context["username"]}'
-
-    response = client.put(
-        f'/users/{context["user_id"]}',
-        headers=context['headers'],
-        json={
-            'username': new_username,
-            'email': context['email'],
-            'password': context['password'],
-        },
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    context['username'] = new_username
 
 
 @then('the project must list the new name as a member')
@@ -96,8 +127,6 @@ def verify_member_of_the_project(client, context):
     assert response.status_code == HTTPStatus.OK
 
     projects = response.json()
-
-    # Encontra o projeto pelo nome
     project = next(
         (t for t in projects if t['project_name'] == context['project_name']),
         None,
@@ -105,8 +134,6 @@ def verify_member_of_the_project(client, context):
     assert project is not None, (
         f"Project '{context['project_name']}' does not exist."
     )
-
-    print('🔎 project response:', project)
 
     usernames = []
     for team in project['teams']:
@@ -118,12 +145,12 @@ def verify_member_of_the_project(client, context):
     )
 
 
-# Scenario: Del a user and ver that they no long appear as a member of a team
+# CT004
 @given('another random user is created')
-def create_another_user(session, context):
+def another_random_user_is_created(session, context):
     another_context = {}
     another_user = create_random_user_direct(session, another_context)
-    context['second_user'] = another_user
+    context['another_user'] = another_user
 
 @given('the team list is updated with the new user')
 def update_the_team_list(client, context):
@@ -147,12 +174,14 @@ def update_the_team_list(client, context):
     user_list = [user['username'] for user in team['users']]
     user_list.append(context['another_user']['username'])
 
-    response = client.patch(
-        f'/teams/{context["team_id"]}',
-        json={'team_name': context['team_name'], 'user_list': user_list},
-        headers=context['headers'],
+    response = add_user_to_team(
+        client,
+        context['team_id'],
+        context['team_name'],
+        user_list,
+        context['headers'],
     )
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.OK, 'user not found'
 
 
 @when('the other user is deleted')
@@ -160,16 +189,9 @@ def delete_user_from_system(client, context):
     # autenticar com o usuário criado
     second_user = context['another_user']
 
-    response = client.post(
-        '/auth/token',
-        data={
-            'username': second_user['email'],
-            'password': second_user['password'],
-        },
+    headers = authenticate_user(
+        client, second_user['email'], second_user['password']
     )
-    assert response.status_code == HTTPStatus.OK
-    token = response.json()['access_token']
-    headers = {'Authorization': f'Bearer {token}'}
 
     response = client.delete(
         f'/users/{second_user["user_id"]}', headers=headers
@@ -199,11 +221,11 @@ def verify_deleted_member_of_the_team(client, context):
     )
 
 
-# Scenario: Del a user and ver that they no long appear as a member
+# CT005
 @given('another third random user is created')
 def create_third_random_user(session, context):
     second_context = {}
-    third_user = create_random_user(session, second_context)
+    third_user = create_random_user_direct(session, second_context)
     context['third_user'] = third_user
 
 
@@ -229,18 +251,20 @@ def new_update_for_team_list(client, context):
     user_list = [user['username'] for user in team['users']]
     user_list.append(context['third_user']['username'])
 
-    response = client.patch(
-        f'/teams/{context["team_id"]}',
-        json={'team_name': context['team_name'], 'user_list': user_list},
-        headers=context['headers'],
+    response = add_user_to_team(
+        client,
+        context['team_id'],
+        context['team_name'],
+        user_list,
+        context['headers'],
     )
+
     assert response.status_code == HTTPStatus.OK
-    print('lista de time atualizada:', user_list)
 
 
 @given('a random project is created with that updated team')
 def step_create_second_project(client, context):
-    create_random_project(client, context)
+    create_random_project_via_api(client, context)
 
 
 @when('the third user is deleted')
@@ -248,16 +272,9 @@ def delete_third_user_from_system(client, context):
     # autenticar com o usuário criado
     third_user = context['third_user']
 
-    response = client.post(
-        '/auth/token',
-        data={
-            'username': third_user['email'],
-            'password': third_user['password'],
-        },
+    headers = authenticate_user(
+        client, third_user['email'], third_user['password']
     )
-    assert response.status_code == HTTPStatus.OK
-    token = response.json()['access_token']
-    headers = {'Authorization': f'Bearer {token}'}
 
     # delete o usuário
     response = client.delete(
@@ -295,36 +312,23 @@ def verify_deleted_member_in_the_project(client, context):
     )
 
 
-# Scenario: Del a user and attempt to create a team with that user
+# CT006
 @given('a new user is created')
-def create_new_user(session, context):
+def creating_user_to_be_deleted(session, context):
     new_context = {}
-    new_user = create_random_user(session, new_context)
-    context['new_user'] = new_user
+    user_to_be_deleted = create_random_user_direct(session, new_context)
+    context['user_to_be_deleted'] = user_to_be_deleted
 
 
 @when('the new user is deleted')
-def delete_new_user(client, context):
-    new_user = context['new_user']
+def deleting_user(client, context):
+    user = context['user_to_be_deleted']
+    headers = authenticate_user(client, user['email'], user['password'])
 
-    response = client.post(
-        '/auth/token',
-        data={
-            'username': new_user['email'],
-            'password': new_user['password'],
-        },
-    )
+    response = client.delete(f'/users/{user["user_id"]}', headers=headers)
     assert response.status_code == HTTPStatus.OK
-    token = response.json()['access_token']
-    headers = {'Authorization': f'Bearer {token}'}
 
-    new_user_id = context['new_user']['user_id']
-    context['new_user_id'] = new_user_id
-
-    response = client.delete(
-        f'/users/{context["new_user_id"]}', headers=headers
-    )
-    assert response.status_code == HTTPStatus.OK
+    context['deleted_user_id'] = user['user_id']
 
 
 @then(
@@ -337,7 +341,7 @@ def create_team_with_deleted_user(client, context):
         '/teams/',
         json={
             'team_name': 'team_with_error',
-            'user_list': [context['new_user']['username']],
+            'user_list': [context['user_to_be_deleted']['username']],
         },
         headers=context['headers'],
     )
