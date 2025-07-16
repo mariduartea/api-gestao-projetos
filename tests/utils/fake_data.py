@@ -21,9 +21,9 @@ def unique_name():
     available_names = [name for name in GIRL_NAMES if name not in used_names]
     name = (
         random.choice(available_names)
-        if available_names
-        else faker.first_name()
-    )
+          if available_names
+          else faker.first_name()
+        )
     used_names.add(name)
     return name.lower()
 
