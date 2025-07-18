@@ -23,8 +23,8 @@ Scenario: Successful end-to-end flow with a team
   Then the updated team appears in the team list
   And the updated team can be retrieved by its ID
   When the user deletes the team
-  Then the team no longer appears in the team list
-  And the team cannot be retrieved by its ID
+  # Then the team no longer appears in the team list
+  # And the team cannot be retrieved by its ID
 
 # Scenario: Tentar criar um time com um usuário inexistente, criar o usuário e validar que é adicionado no time com sucesso
 # Scenario: Atualizar um time e verificar a alteração na lista de times

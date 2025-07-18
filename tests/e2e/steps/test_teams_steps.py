@@ -3,11 +3,17 @@ from http import HTTPStatus
 import pytest
 from pytest_bdd import given, scenarios, then, when
 from utils.helpers import (
+    add_team_to_project,
     authentication,
     create_random_user_direct,
     create_random_team_via_api,
     create_random_team_direct,
     create_random_project_via_api,
+    create_random_user_direct,
+    delete_updated_team,
+    find_team,
+    find_team_by_id,
+    update_team,
 )
 
 scenarios('../features/teams.feature')
@@ -19,11 +25,11 @@ def context():
 # Steps em comum de todos os cenários
 @given("the API has a registered team")
 def verify_registered_team(session, client, context):
+    context.clear()
     create_random_user_direct(session, context)
     authentication(client, context)
-    data = create_random_team_via_api(client, context)
-    # context.update(data)
-
+    create_random_team_via_api(client, context)
+   
 @given("this team is associated with a project")
 def verify_associated_team_with_project(client, context):
     create_random_project_via_api(client, context)
@@ -32,10 +38,13 @@ def verify_associated_team_with_project(client, context):
 @when("this team is edited")
 def edit_team(client, context):
     new_team_name = f'Updated {context["team_name"]}'
-    response = client.patch(
-        f'/teams/{context["team_id"]}',
-        json={'team_name': new_team_name},
-        headers=context['headers'],
+    response = update_team(
+        client = client,
+        team_id=context['team_id'],
+        team_data={
+            'team_name': new_team_name
+        },
+        headers=context['headers']
     )
     assert response.status_code == HTTPStatus.OK, (
         f'Error while updating team: {response.json()}'
@@ -93,10 +102,12 @@ def create_project(client, context):
     team_list = [team['team_name'] for team in project['teams']]
     team_list.append(context['another_team']['team_name'])
 
-    response = client.patch(
-        f'/projects/{context["project_id"]}',
-        json={'project_name': context['project_name'], 'team_list': team_list},
-        headers = context['headers']
+    response = add_team_to_project(
+        client, 
+        context['project_id'],
+        context['project_name'],
+        team_list,
+        context['headers']
     )
 
     # FAZ NOVO GET para ver o efeito real
@@ -134,42 +145,75 @@ def verify_no_deleted_team_in_project(client, context):
     )
 
 # Scenario: Successful end-to-end flow with a team
-@given("Successful end-to-end flow with a team")
-def create_user():
-    return 0
+@given("a user is created")
+def create_user(client, session, context):
+    create_random_user_direct(session, context)
+    authentication(client, context)
 
 @when("the user creates a new team")
-def create_team():
-    return 0
+def create_team(client, context):
+    create_random_team_via_api(client, context)
 
 @then("the team appears in the team list")
-def get_teams_list():
-    return 0
+def get_teams_list(client, context):
+    response = find_team(client, context['headers'], context['team_name'])
+    assert response is not None, (
+        f"Team '{context['team_name']}' not found in the team list"
+    )
 
-@when("the team can be retrieved by its ID")
-def get_team_by_id():
-    return 0
+@then("the team can be retrieved by its ID")
+def get_team_by_id(client, context):
+    response = find_team_by_id(client, context['headers'], context['team_id'])
+    assert response is not None, (
+        f"Team with ID {context['team_id']} was not found."
+    )
 
 @when("the user updates the team data")
-def update_team():
-    return 0
+def edit_team(client, context):
+    new_team_name = f'Updated {context["team_name"]}'
+    response = update_team(client, context['team_id'], 
+                       team_data={
+                           'team_name': new_team_name
+                           },
+                        headers=context['headers'])
+    assert response.status_code == HTTPStatus.OK, (
+        f'Error while updating team: {response.json()}'
+    )
+    # Atualiza o context com o novo nome
+    context['team_name'] = new_team_name
+   
 
 @then("the updated team appears in the team list")
-def get_updated_team_in_teams_list():
-    return 0
+def get_updated_team_in_teams_list(client, context):
+    response = find_team(client, context['headers'], context['team_name'])
+    assert response is not None, (
+        f"Team '{context['team_name']}' not found in the team list"
+    )
 
-@when("the updated team can be retrieved by its ID")
-def get_updated_team_by_id():
-    return 0
+@then("the updated team can be retrieved by its ID")
+def get_updated_team_by_id(client, context):
+    response = find_team_by_id(client, context['headers'], context['team_id'])
+    assert response is not None, (
+        f"Team with ID {context['team_id']} was not found."
+    )
 
 @when("the user deletes the team")
-def delete_team():
-    return 0
+def delete_team(client, context):
+    response = delete_updated_team(client, context['headers'], context['team_id'])
+    assert response.get('message') == 'Team deleted successfully', (
+        f"Team with ID {context['team_id']} was not deleted successfully"
+    )
 
 @then("the team no longer appears in the team list")
-def deleted_team_not_in_teams_list():
-    return 0
+def deleted_team_not_in_teams_list(client, context):
+    response = find_team(client, context['headers'], context['team_name'])
+    assert response is None, (
+        f"Team '{context['team_name']}' was found in the team list"
+    )
 
 @then("the team cannot be retrieved by its ID")
-def deleted_team_not_found_by_id():
-    return 0
+def deleted_team_not_found_by_id(client, context):
+    response = find_team_by_id(client, context['headers'], context['teams_id'])
+    assert response is None, (
+        f"Team with ID {context['team_id']} was found."
+    )

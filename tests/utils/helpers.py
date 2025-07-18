@@ -40,11 +40,52 @@ def update_user(client, user_id, user_data: dict, headers):
     )
 
 
+def update_team(client, team_id, team_data: dict, headers):
+    return client.patch(
+        f'/teams/{team_id}',
+        json=team_data,
+        headers=headers,
+    )
+
+def find_team(client, headers, team_name):
+    response = client.get(
+        '/teams/',
+        headers=headers,
+        params={'team_name': team_name}
+    )
+    response.raise_for_status() 
+
+    teams = response.json()
+
+    if not teams:
+        return None
+
+    return next((team for team in teams if team['team_name'] == team_name), None)
+
+def find_team_by_id(client, headers, team_id):
+    response = client.get(
+        f'/teams/{team_id}',  
+        headers=headers
+    )
+    if response.status_code == HTTPStatus.NOT_FOUND:
+        return None  
+    response.raise_for_status()
+
+    return response.json()  
+
+
 def add_user_to_team(client, team_id, team_name, users, headers):
     return client.patch(
         f'/teams/{team_id}',
         json={'team_name': team_name, 'user_list': users},
         headers=headers,
+    )
+
+def add_team_to_project(client, project_id, project_name, teams, headers):
+    return client.patch(
+        f'/projects/{project_id}',
+        json={'project_name':project_name, 'team_list': teams},
+        headers=headers
     )
 
 
@@ -128,3 +169,13 @@ def create_random_project_via_api(client, context):
     assert response.status_code == HTTPStatus.CREATED, (
         f'Error while creating project: {response.json()}'
     )
+
+def delete_updated_team(client, headers, team_id):
+    response = client.delete(
+        f'/teams/{team_id}',  
+        headers=headers
+    )
+    if response.status_code == HTTPStatus.NOT_FOUND:
+        return None  
+    response.raise_for_status()
+    return response.json() if response.content else None
