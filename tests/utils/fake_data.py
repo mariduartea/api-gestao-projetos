@@ -21,9 +21,9 @@ def unique_name():
     available_names = [name for name in GIRL_NAMES if name not in used_names]
     name = (
         random.choice(available_names)
-          if available_names
-          else faker.first_name()
-        )
+        if available_names
+        else faker.first_name()
+    )
     used_names.add(name)
     return name.lower()
 
@@ -38,9 +38,7 @@ def fake_user_data():
 
 
 def fake_team_name():
-    return (
-        f'Time {random.choice(["X", "Z", "Superpoderoso", "Cidade Segura"])}'
-    )
+    return f'Time {unique_name().capitalize()}'
 
 
 def fake_project_name():

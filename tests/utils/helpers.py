@@ -99,9 +99,8 @@ def create_random_project(client, context):
     )
     return response.json()
 
+
 def update_project(client, project_id, project_data: dict, headers):
     return client.patch(
-        f'/projects/{project_id}',
-        json=project_data,
-        headers=headers
+        f'/projects/{project_id}', json=project_data, headers=headers
     )
