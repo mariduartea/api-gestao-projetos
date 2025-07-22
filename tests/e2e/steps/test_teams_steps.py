@@ -213,7 +213,7 @@ def deleted_team_not_in_teams_list(client, context):
 
 @then("the team cannot be retrieved by its ID")
 def deleted_team_not_found_by_id(client, context):
-    response = find_team_by_id(client, context['headers'], context['teams_id'])
+    response = find_team_by_id(client, context['headers'], context['team_id'])
     assert response is None, (
         f"Team with ID {context['team_id']} was found."
     )

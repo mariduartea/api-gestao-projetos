@@ -53,6 +53,9 @@ def find_team(client, headers, team_name):
         headers=headers,
         params={'team_name': team_name}
     )
+    if response.status_code == HTTPStatus.NOT_FOUND:
+        return None
+    
     response.raise_for_status() 
 
     teams = response.json()
