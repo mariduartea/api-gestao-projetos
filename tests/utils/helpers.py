@@ -155,7 +155,7 @@ def create_random_team_direct(session, context, num_users=2):
     context['team_name'] = team.team_name
     return context
 
-
+# criando um novo método para criação de projeto devido a prática de responsabilidade única
 def create_random_project_via_api(client, context):
     project_name = fake_project_name()
     context['project_name'] = project_name
@@ -172,6 +172,26 @@ def create_random_project_via_api(client, context):
     assert response.status_code == HTTPStatus.CREATED, (
         f'Error while creating project: {response.json()}'
     )
+
+def cannot_create_project_with_invalid_team(client, context):
+    project_name = fake_project_name()
+    context['project_name'] = project_name
+
+    response = client.post(
+        '/projects/',
+        json={
+            'project_name': project_name,
+            'team_list': [context['team_name']],
+        },
+        headers=context['headers'],
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND, (
+        f'Expected not found status, got {response.status_code}: {response.json()}'
+    )
+    expected_error = "One or more teams do not exist"
+    assert response.json()['detail'] == expected_error
+
+    return response
 
 def delete_updated_team(client, headers, team_id):
     response = client.delete(

@@ -5,6 +5,7 @@ from pytest_bdd import given, scenarios, then, when
 from utils.helpers import (
     add_team_to_project,
     authentication,
+    cannot_create_project_with_invalid_team,
     create_random_user_direct,
     create_random_team_via_api,
     create_random_team_direct,
@@ -217,3 +218,25 @@ def deleted_team_not_found_by_id(client, context):
     assert response is None, (
         f"Team with ID {context['team_id']} was found."
     )
+
+# Scenario: Creating a project with a deleted team returns an error
+@given("a team is created")
+def create_team(client, context, session):
+    create_random_user_direct(session, context)
+    authentication(client, context)
+    create_random_team_via_api(client, context)
+
+@when("the team is deleted")
+def delete_team(client, context):
+    response = client.delete(
+        f'/teams/{context["team_id"]}',
+        headers=context['headers']
+    )
+
+    assert response.status_code == HTTPStatus.OK, (
+        f'Error while deleting team: {response.json()}'
+    )
+
+@then("creating a project with the deleted team should fail with 'One or more teams do not exist' error")
+def verify_not_found_team_message(client, context):
+    cannot_create_project_with_invalid_team(client, context)

@@ -26,6 +26,7 @@ Scenario: Successful end-to-end flow with a team
   Then the team no longer appears in the team list
   And the team cannot be retrieved by its ID
 
-# Scenario: Tentar criar um time com um usuário inexistente, criar o usuário e validar que é adicionado no time com sucesso
-# Scenario: Atualizar um time e verificar a alteração na lista de times
-# Scenario: Deletar um time e tentar criar um projeto com esse time (falha)
+Scenario: Creating a project with a deleted team returns an error
+  Given a team is created
+  When the team is deleted
+  Then creating a project with the deleted team should fail with 'One or more teams do not exist' error
