@@ -11,7 +11,7 @@ Scenario: Deleting a team and verify if it doesn't exist in a certain project
   And this team is associated with a project
   And another random team is created
   And the project list is updated with the new team
-  When this team is deleted
+  When the team is deleted
   Then the deleted team have to disappear in project list
 
 Scenario: Successful end-to-end flow with a team
@@ -19,7 +19,7 @@ Scenario: Successful end-to-end flow with a team
   When the user creates a new team
   Then the team appears in the team list
   And the team can be retrieved by its ID
-  When the user updates the team data
+  When this team is edited
   Then the updated team appears in the team list
   And the updated team can be retrieved by its ID
   When the user deletes the team

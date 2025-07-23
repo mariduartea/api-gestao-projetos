@@ -115,7 +115,7 @@ def verify_member_of_the_team(client, context):
     )
 
 
-# Scenario: Update a user and verify that the change appears in the project list
+# Scenario: Update user and verify that the change appears in the project list
 @given('a random project is created with that team')
 def step_create_project(client, context):
     create_random_project_via_api(client, context)
@@ -145,12 +145,13 @@ def verify_member_of_the_project(client, context):
     )
 
 
-# Scenario: Delete a user and verify that they no longer appear as a member of a team
+# Scenario: Delete user and verify that it's not a member of a team
 @given('another random user is created')
 def another_random_user_is_created(session, context):
     another_context = {}
     another_user = create_random_user_direct(session, another_context)
     context['another_user'] = another_user
+
 
 @given('the team list is updated with the new user')
 def update_the_team_list(client, context):
@@ -221,7 +222,7 @@ def verify_deleted_member_of_the_team(client, context):
     )
 
 
-# Scenario: Delete a user and verify that they no longer appear as a member of a project
+# Scenario: Delete a user and verify that it's not a member of a project
 @given('another third random user is created')
 def create_third_random_user(session, context):
     second_context = {}
@@ -312,7 +313,7 @@ def verify_deleted_member_in_the_project(client, context):
     )
 
 
-# Scenario: Delete a user and attempt to create a team with that user (should fail)
+# Scenario: Delete a user and attempt to create a team with that user
 @given('a new user is created')
 def creating_user_to_be_deleted(session, context):
     new_context = {}

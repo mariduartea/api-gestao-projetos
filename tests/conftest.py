@@ -8,8 +8,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 from testcontainers.postgres import PostgresContainer
+
 from task_flow.app import app
-from task_flow.database import engine, get_session
+from task_flow.database import get_session
 from task_flow.models import (
     Project,
     Team,
@@ -259,10 +260,3 @@ def another_project_with_same_name(session, team_list, users):
     session.commit()
     session.refresh(project)
     return project
-
-@pytest.fixture
-def session(engine):
-    table_registry.metadata.create_all(engine) 
-    with Session(engine) as session:
-        yield session
-    table_registry.metadata.drop_all(engine)   

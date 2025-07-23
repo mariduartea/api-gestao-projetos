@@ -16,7 +16,7 @@ GIRL_NAMES = [
     'MojoJojo',
 ]
 
-# Nomes de times 
+# Nomes de times
 TEAM_NAMES = [
     'Elemento X',
     'Gangue Gangrena',
@@ -24,7 +24,7 @@ TEAM_NAMES = [
     'Trio Ameba',
     'Superpoderosas',
     'Townsville',
-    'Meninos Desordeiros'
+    'Meninos Desordeiros',
 ]
 
 
@@ -53,12 +53,13 @@ def fake_team_name():
         f'Time {random.choice(["X", "Z", "Superpoderoso", "Cidade Segura"])}'
     )
 
+
 def fake_team_data(num_users=1):
     team_name = random.choice(TEAM_NAMES)
     users = [fake_user_data() for _ in range(num_users)]
     return {
         'team_name': team_name,
-        'user_list': [user['username'] for user in users]
+        'user_list': [user['username'] for user in users],
     }
 
 

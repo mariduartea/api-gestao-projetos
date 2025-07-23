@@ -24,7 +24,7 @@ Scenario: Update a user and verify that the change appears in the project list
     Then the project must list the new name as a member
 
 #CT 004
-Scenario: Delete a user and verify that they no longer appear as a member of a team
+Scenario: Delete user and verify that it's not a member of a team
     Given a random user is created
     And a random team is created with that user
     And another random user is created
@@ -33,7 +33,7 @@ Scenario: Delete a user and verify that they no longer appear as a member of a t
     Then the team must not list the deleted user as a member
 
 #CT 005
-Scenario: Delete a user and verify that they no longer appear as a member of a project
+Scenario: Delete a user and verify that it's not a member of a project
     Given a random user is created
     And a random team is created with that user
     And another third random user is created
