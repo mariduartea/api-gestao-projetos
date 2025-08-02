@@ -1,9 +1,13 @@
 # biblioteca padrão
 from http import HTTPStatus
 
+import pytest
+
 # import do projeto
 from task_flow.database import get_user_count
 from task_flow.schemas import UserPublic
+
+pytestmark = pytest.mark.unit
 
 
 def test_create_user(client):

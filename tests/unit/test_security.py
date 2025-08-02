@@ -1,8 +1,11 @@
 from http import HTTPStatus
 
+import pytest
 from jwt import decode
 
 from task_flow.security import create_access_token, settings
+
+pytestmark = pytest.mark.unit
 
 
 def test_jwt():

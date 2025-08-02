@@ -16,6 +16,8 @@ from utils.helpers import (
     update_team,
 )
 
+pytestmark = pytest.mark.e2e
+
 scenarios('../features/teams.feature')
 
 

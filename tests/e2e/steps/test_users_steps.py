@@ -12,6 +12,8 @@ from utils.helpers import (
     update_user,
 )
 
+pytestmark = pytest.mark.e2e
+
 scenarios('../features/users.feature')
 
 
