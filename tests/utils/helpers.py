@@ -207,3 +207,8 @@ def delete_updated_team(client, headers, team_id):
         return None
     response.raise_for_status()
     return response.json() if response.content else None
+
+def update_project(client, project_id, project_data: dict, headers):
+    return client.patch(
+        f'/projects/{project_id}', json=project_data, headers=headers
+    )

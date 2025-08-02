@@ -49,9 +49,7 @@ def fake_user_data():
 
 
 def fake_team_name():
-    return (
-        f'Time {random.choice(["X", "Z", "Superpoderoso", "Cidade Segura"])}'
-    )
+    return f'Time {unique_name().capitalize()}'
 
 
 def fake_team_data(num_users=1):
