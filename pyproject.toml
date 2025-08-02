@@ -60,7 +60,7 @@ pre_format = 'ruff check --fix'
 format = 'ruff format'
 run = 'fastapi dev task_flow/app.py'
 pre_test = 'task lint'
-test = 'pytest -s --cov=task_flow -vv'
+test = 'pytest tests/ -s --cov=task_flow -vv'
 post_test = 'coverage html'
 
 [build-system]
