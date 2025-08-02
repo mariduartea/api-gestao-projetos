@@ -136,6 +136,7 @@ def create_random_team_via_api(client, context, num_users=2):
     response_data = response.json()
     context['team_id'] = response_data['id']
     print('Team created:', team_name)
+    return response_data
 
 
 def create_random_team_direct(session, context, num_users=2):
@@ -178,6 +179,9 @@ def create_random_project_via_api(client, context):
         f'Error while creating project: {response.json()}'
     )
 
+    project_data = response.json()
+    return project_data
+
 
 def cannot_create_project_with_invalid_team(client, context):
     project_name = fake_project_name()
@@ -207,6 +211,7 @@ def delete_updated_team(client, headers, team_id):
         return None
     response.raise_for_status()
     return response.json() if response.content else None
+
 
 def update_project(client, project_id, project_data: dict, headers):
     return client.patch(

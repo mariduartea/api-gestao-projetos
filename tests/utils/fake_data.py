@@ -16,17 +16,6 @@ GIRL_NAMES = [
     'MojoJojo',
 ]
 
-# Nomes de times
-TEAM_NAMES = [
-    'Elemento X',
-    'Gangue Gangrena',
-    'Escola Carvalhinho',
-    'Trio Ameba',
-    'Superpoderosas',
-    'Townsville',
-    'Meninos Desordeiros',
-]
-
 
 def unique_name():
     available_names = [name for name in GIRL_NAMES if name not in used_names]
@@ -50,15 +39,6 @@ def fake_user_data():
 
 def fake_team_name():
     return f'Time {unique_name().capitalize()}'
-
-
-def fake_team_data(num_users=1):
-    team_name = random.choice(TEAM_NAMES)
-    users = [fake_user_data() for _ in range(num_users)]
-    return {
-        'team_name': team_name,
-        'user_list': [user['username'] for user in users],
-    }
 
 
 def fake_project_name():
