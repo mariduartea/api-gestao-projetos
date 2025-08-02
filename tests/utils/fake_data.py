@@ -13,7 +13,7 @@ GIRL_NAMES = [
     'Seduza',
     'Him',
     'ProfessorUtonio',
-    'JomoMomo',
+    'MojoJojo',
 ]
 
 

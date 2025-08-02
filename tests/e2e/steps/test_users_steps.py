@@ -6,13 +6,13 @@ from utils.helpers import (
     add_user_to_team,
     authenticate_user,
     authentication,
-    create_random_project,
-    create_random_team,
-    create_random_user,
+    create_random_project_via_api,
+    create_random_team_via_api,
+    create_random_user_direct,
     update_user,
 )
 
-scenarios('../feature/users.feature')
+scenarios('../features/users.feature')
 
 
 @pytest.fixture
@@ -20,10 +20,15 @@ def context():
     return {}
 
 
-# CT001
+# Scenario: Update a user and verify that the change appears in the user list
 @given('a random user is created')
+def step_create_user(session, context):
+    data = create_random_user_direct(session, context)
+    context.update(data)
+
+
 def random_user_is_created(session, context):
-    create_random_user(session, context)
+    create_random_user_direct(session, context)
 
 
 @when('the user changes their name and email')
@@ -68,11 +73,11 @@ def verify_user_list_updates(client, context):
     assert user is not None, 'Updated user not found in user list'
 
 
-# CT002
+# Scenario: Update a user and verify that the change appears in the team list
 @given('a random team is created with that user')
 def random_team_is_created(client, context):
     authentication(client, context)
-    create_random_team(client, context)
+    create_random_team_via_api(client, context)
 
 
 @when('the user changes their name')
@@ -110,10 +115,10 @@ def verify_member_of_the_team(client, context):
     )
 
 
-# CT003
+# Scenario: Update user and verify that the change appears in the project list
 @given('a random project is created with that team')
-def random_project_is_created(client, context):
-    create_random_project(client, context)
+def step_create_project(client, context):
+    create_random_project_via_api(client, context)
 
 
 @then('the project must list the new name as a member')
@@ -140,11 +145,11 @@ def verify_member_of_the_project(client, context):
     )
 
 
-# CT004
+# Scenario: Delete user and verify that it's not a member of a team
 @given('another random user is created')
 def another_random_user_is_created(session, context):
     another_context = {}
-    another_user = create_random_user(session, another_context)
+    another_user = create_random_user_direct(session, another_context)
     context['another_user'] = another_user
 
 
@@ -217,11 +222,11 @@ def verify_deleted_member_of_the_team(client, context):
     )
 
 
-# CT005
+# Scenario: Delete a user and verify that it's not a member of a project
 @given('another third random user is created')
 def create_third_random_user(session, context):
     second_context = {}
-    third_user = create_random_user(session, second_context)
+    third_user = create_random_user_direct(session, second_context)
     context['third_user'] = third_user
 
 
@@ -260,7 +265,7 @@ def new_update_for_team_list(client, context):
 
 @given('a random project is created with that updated team')
 def step_create_second_project(client, context):
-    create_random_project(client, context)
+    create_random_project_via_api(client, context)
 
 
 @when('the third user is deleted')
@@ -308,11 +313,11 @@ def verify_deleted_member_in_the_project(client, context):
     )
 
 
-# CT006
+# Scenario: Delete a user and attempt to create a team with that user
 @given('a new user is created')
 def creating_user_to_be_deleted(session, context):
     new_context = {}
-    user_to_be_deleted = create_random_user(session, new_context)
+    user_to_be_deleted = create_random_user_direct(session, new_context)
     context['user_to_be_deleted'] = user_to_be_deleted
 
 
