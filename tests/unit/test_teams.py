@@ -1,9 +1,13 @@
 from http import HTTPStatus
 
+import pytest
+
 from task_flow.utils.utils import (
     assert_team_has_users,
     get_team_by_id,
 )
+
+pytestmark = pytest.mark.unit
 
 
 # >>>>>> TESTES DE CRIAR TIMES

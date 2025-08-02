@@ -1,8 +1,11 @@
 from dataclasses import asdict
 
+import pytest
 from sqlalchemy import select
 
 from task_flow.models import User
+
+pytestmark = pytest.mark.unit
 
 
 def test_create_user(session, mock_db_time):

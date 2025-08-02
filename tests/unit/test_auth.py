@@ -1,6 +1,9 @@
 from http import HTTPStatus
 
+import pytest
 from freezegun import freeze_time
+
+pytestmark = pytest.mark.unit
 
 
 def test_get_token(client, user):

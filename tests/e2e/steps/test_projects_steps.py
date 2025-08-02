@@ -10,6 +10,8 @@ from utils.helpers import (
     update_project,
 )
 
+pytestmark = pytest.mark.e2e
+
 scenarios('../features/projects.feature')
 
 
