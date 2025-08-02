@@ -78,6 +78,7 @@ def create_random_team(client, context):
     assert response.status_code == HTTPStatus.CREATED, (
         f'Error while creating team: {response.json()}'
     )
+    return response.json()
 
 
 def create_random_project(client, context):
@@ -95,4 +96,11 @@ def create_random_project(client, context):
 
     assert response.status_code == HTTPStatus.CREATED, (
         f'Error while creating project: {response.json()}'
+    )
+    return response.json()
+
+
+def update_project(client, project_id, project_data: dict, headers):
+    return client.patch(
+        f'/projects/{project_id}', json=project_data, headers=headers
     )
