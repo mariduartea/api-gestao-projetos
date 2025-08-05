@@ -35,7 +35,7 @@ def test_not_create_user_already_registered(client, user):
         },
     )
     assert response.status_code == HTTPStatus.CONFLICT
-    assert response.json() == {'detail': 'Usuário já cadastrado'}
+    assert response.json() == {'detail': 'Username already registered'}
 
 
 def test_not_create_email_already_registered(client, user):
@@ -48,7 +48,7 @@ def test_not_create_email_already_registered(client, user):
         },
     )
     assert response.status_code == HTTPStatus.CONFLICT
-    assert response.json() == {'detail': 'Email já cadastrado'}
+    assert response.json() == {'detail': 'Email already registered'}
 
 
 # teste para validar que não é possível inserir senha menor que 6 caracteres
@@ -151,7 +151,7 @@ def test_not_update_wrong_user(client, other_user, token):
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {
-        'detail': 'Você não tem permissão para editar esse usuário'
+        'detail': 'You are not allowed to edit this user'
     }
 
 
@@ -184,7 +184,7 @@ def test_delete_user(client, user, token):
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {'message': 'Usuário deletado com sucesso'}
+    assert response.json() == {'message': 'User deleted successfully'}
 
 
 def test_not_delete_wrong_user(client, other_user, token):
@@ -196,5 +196,5 @@ def test_not_delete_wrong_user(client, other_user, token):
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {
-        'detail': 'Você não tem permissão para deletar esse usuário'
+        'detail': 'You are not allowed to delete this user'
     }

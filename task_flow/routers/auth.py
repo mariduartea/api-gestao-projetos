@@ -28,7 +28,7 @@ def login_for_access_token(session: T_Session, form_data: T_OAuthForm):
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
-            detail='Usuário ou senha inválidos',
+            detail='Invalid username or password',
         )
 
     # a Claim sub é o padrão do JWT para o usuário
