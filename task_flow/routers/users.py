@@ -36,7 +36,7 @@ def read_user_with_id(user_id: int, session: T_Session):
 
     if not user_with_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado'
+            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
         )
 
     return user_with_id
@@ -54,13 +54,13 @@ def create_users(user: UserSchema, session: T_Session):
         if db_user.username == user.username:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail='Usuário já cadastrado',
+                detail='Username already registered',
             )
 
         if db_user.email == user.email:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail='Email já cadastrado',
+                detail='Email already registered',
             )
 
     db_user = User(
@@ -87,7 +87,7 @@ def update_user(
     if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
-            detail='Você não tem permissão para editar esse usuário',
+            detail='You are not allowed to edit this user',
         )
 
     current_user.username = user.username
@@ -110,10 +110,10 @@ def delete_user(
     if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
-            detail='Você não tem permissão para deletar esse usuário',
+            detail='You are not allowed to delete this user',
         )
 
     session.delete(current_user)
     session.commit()
 
-    return {'message': 'Usuário deletado com sucesso'}
+    return {'message': 'User deleted successfully'}
