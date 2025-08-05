@@ -61,7 +61,7 @@ def test_token_wrong_password(client, user):
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.json() == {'detail': 'Usuário ou senha inválidos'}
+    assert response.json() == {'detail': 'Invalid username or password'}
 
 
 def test_token_wrong_email(client, user):
@@ -71,7 +71,7 @@ def test_token_wrong_email(client, user):
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.json() == {'detail': 'Usuário ou senha inválidos'}
+    assert response.json() == {'detail': 'Invalid username or password'}
 
 
 def test_refresh_wrong_email(client, token):
